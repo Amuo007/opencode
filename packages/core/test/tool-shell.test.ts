@@ -1644,6 +1644,39 @@ describe("ShellTool", () => {
     ),
   )
 
+  it.live("tells the model when the user stops a background command", () =>
+    Effect.acquireUseRelease(
+      Effect.promise(() => tmpdir()),
+      (tmp) => {
+        reset()
+        return withSession(tmp.path, (registry) =>
+          Effect.gen(function* () {
+            const bus = yield* Bus.Service
+            const shell = yield* Shell.Service
+            const admitted = yield* bus.subscribe(SessionEvent.InboxEnqueued).pipe(
+              Stream.filter((event) => event.data.sessionID === sessionID && event.data.item.type === "synthetic"),
+              Stream.runHead,
+              Effect.forkScoped({ startImmediately: true }),
+            )
+            const started = yield* executeTool(
+              registry,
+              call({ command: idleCommand, background: true }, "call-background-user-stop"),
+            )
+            const shellID = started.metadata?.shellID
+            if (typeof shellID !== "string") throw new Error("missing shell ID")
+            // The app's running menu removes the shell.
+            yield* shell.remove(ID.make(shellID))
+            expect((yield* Fiber.join(admitted)).valueOrUndefined?.data.item.payload).toMatchObject({
+              text: expect.stringContaining(ShellTool.STOPPED_BY_USER),
+              metadata: { source: "shell", shellID, state: "cancelled" },
+            })
+          }),
+        )
+      },
+      (tmp) => Effect.promise(() => tmp[Symbol.asyncDispose]().then(() => undefined)),
+    ),
+  )
+
   it.live("persists a silent command that finishes before backgrounding", () =>
     Effect.acquireUseRelease(
       Effect.promise(() => tmpdir()),

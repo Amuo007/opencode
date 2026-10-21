@@ -70,6 +70,10 @@ const WATCH_INTERVAL_MS = 1_000
 const WATCH_GAP_MS = 5_000
 const WATCH_LIMIT = 10
 
+// What the model reads when the user stops a running command from the app, so it does not restart it on its own.
+export const STOPPED_BY_USER =
+  "The user stopped this command from the app. It is no longer running; do not restart it unless the user asks."
+
 /** Matching lines in new output, given the text left over from the previous read. */
 export function matchLines(pattern: RegExp, carry: string, chunk: string) {
   const lines = (carry + chunk).split("\n")
@@ -181,21 +185,26 @@ export const Plugin = {
       ) {
         const info = (yield* jobs.wait({ id })).info
         if (!info || info.status === "running") return
+        const stopped = info.status === "error" && !!info.error?.includes(STOPPED_BY_USER)
         const output = info.status === "completed" ? yield* Deferred.await(settled) : undefined
-        const text = output
-          ? resultMessages(output).join("\n\n")
-          : info.status === "error"
-            ? (info.error ?? "Command failed")
-            : "Cancelled"
+        const text = stopped
+          ? STOPPED_BY_USER
+          : output
+            ? resultMessages(output).join("\n\n")
+            : info.status === "error"
+              ? (info.error ?? "Command failed")
+              : "Cancelled"
         yield* sessions.synthetic({
           ...(info.notificationID ? { id: info.notificationID } : {}),
           sessionID,
           description: command,
+          // The user already knows they stopped it; the notice waits for their next message instead of starting a turn.
+          ...(stopped ? { resume: false } : {}),
           ...ShellResult.notification({
             jobID: id,
             shellID,
             command,
-            state: info.status,
+            state: stopped ? "cancelled" : info.status,
             text,
             output,
           }),
@@ -286,6 +295,8 @@ export const Plugin = {
               const settled = yield* Deferred.make<Output>()
               const run = Effect.gen(function* () {
                 const result = yield* shell.result(info)
+                // A running command removed from outside this tool was stopped by the user from the app.
+                if (!result.capture && result.info.status === "killed") return yield* Effect.fail(new Error(STOPPED_BY_USER))
                 if (!result.capture) return yield* new Shell.NotFoundError({ id: info.id })
                 const output = ShellResult.output(result)
                 return {
