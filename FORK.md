@@ -14,7 +14,13 @@ cd packages/cli && OPENCODE_CHANNEL=local bun run script/build.ts --single --ski
 ./dist/cli-darwin-arm64/bin/opencode serve      # web UI at the printed address
 ```
 
+`serve` prints the address and a `server password`. Open the address, choose **Use password** and paste it
+(or start it with `OPENCODE_PASSWORD=yourpassword` to pick your own, and `--port 4096` to fix the port).
+
 Or run from source with `bun run dev` in the repo root. It reads your normal `~/.config/opencode` config.
+
+Requirements: Google Chrome (or Chromium, Edge, Brave, Arc) for the browser tools and the Agent browser panel.
+On macOS, the `screenshot` tool needs Screen Recording permission for the app that runs OpenCode (your terminal).
 
 ## New tools for the agent
 
