@@ -55,6 +55,7 @@ import { ModelsDev } from "../models-dev.js"
 import { Mcp } from "../mcp/index.js"
 import { Npm } from "@opencode/util/npm"
 import { Permission } from "../permission.js"
+import { Pty } from "../pty.js"
 import { Reference } from "../reference.js"
 import { WebSearch } from "../websearch.js"
 import { Ripgrep } from "../ripgrep.js"
@@ -72,6 +73,7 @@ import { PatchTool } from "../tool/plugin/patch.js"
 import { PlanExitTool } from "../tool/plugin/plan-exit.js"
 import { ChromeTools } from "../tool/plugin/chrome.js"
 import { ScreenTool } from "../tool/plugin/screen.js"
+import { TerminalTools } from "../tool/plugin/terminal.js"
 import { EditTool } from "../tool/plugin/edit.js"
 import { GlobTool } from "../tool/plugin/glob.js"
 import { GrepTool } from "../tool/plugin/grep.js"
@@ -145,6 +147,7 @@ const services = [
   Mcp.Service,
   Npm.Service,
   Permission.Service,
+  Pty.Service,
   Form.Service,
   ReadToolFileSystem.Service,
   Reference.Service,
@@ -199,6 +202,7 @@ export const requirements = LayerNode.group([
   Mcp.node,
   Npm.node,
   Permission.node,
+  Pty.node,
   Form.node,
   ReadToolFileSystem.node,
   Reference.node,
@@ -248,6 +252,7 @@ const pre = [
   IdentityPlugin.Plugin,
   ChromeTools.Plugin,
   ScreenTool.Plugin,
+  TerminalTools.Plugin,
   EditTool.Plugin,
   GlobTool.Plugin,
   GrepTool.Plugin,

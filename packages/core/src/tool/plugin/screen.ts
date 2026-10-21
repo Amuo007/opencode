@@ -12,6 +12,9 @@ import { Permission } from "../../permission.js"
 // Captures the computer's screen (the desktop and its apps), as opposed to chrome_screenshot, which
 // captures the agent's headless browser page.
 
+// Small models often send numbers as strings, so numeric inputs accept both.
+const Loose = Schema.Union([Schema.Number, Schema.NumberFromString])
+
 export const name = "screenshot"
 const MAX_SIDE = 1600
 
@@ -94,7 +97,7 @@ export const Plugin = {
             .filter(Boolean)
             .join(" "),
           input: Schema.Struct({
-            display: Schema.optionalKey(Schema.Number).annotate({
+            display: Schema.optionalKey(Loose).annotate({
               description: "Display number on macOS (1 is the main display). Omit for the main display.",
             }),
           }),

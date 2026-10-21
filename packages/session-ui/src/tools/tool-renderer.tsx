@@ -371,6 +371,7 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
       if (tool.name === "lsp") return i18n.t("ui.tool.lsp")
       if (tool.name === "shell_stop") return i18n.t("ui.tool.shellStop")
       if (tool.name === "screenshot") return i18n.t("ui.tool.screenshot")
+      if (tool.name.startsWith("terminal_")) return i18n.t("ui.tool.terminal")
       if (tool.name === "goal_complete") return i18n.t("ui.tool.goalComplete")
       if (tool.name === "notify") return i18n.t("ui.tool.notify")
       return tool.name
@@ -1889,6 +1890,24 @@ ToolRegistry.register({
     )
   },
 })
+
+const TerminalTool: ToolComponent = (props) => {
+  const i18n = useI18n()
+  return (
+    <BasicTool
+      {...props}
+      icon="console"
+      hideDetails
+      trigger={{
+        title: i18n.t(props.tool === "terminal_run" ? "ui.tool.terminal.run" : "ui.tool.terminal.read"),
+        subtitle: textValue(props.input.command),
+      }}
+    />
+  )
+}
+
+ToolRegistry.register({ name: "terminal_read", render: TerminalTool })
+ToolRegistry.register({ name: "terminal_run", render: TerminalTool })
 
 ToolRegistry.register({
   name: "shell_stop",

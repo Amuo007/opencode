@@ -362,6 +362,11 @@ function fallbackInline(ctx: ToolFrame): ToolInline {
     return { icon: "☑", title: `Plan ready for approval${heading ? `: ${heading.slice(0, 100)}` : ""}` }
   }
   if (ctx.name === "screenshot") return { icon: "▣", title: "Screenshot of screen" }
+  if (ctx.name === "terminal_read") return { icon: "▭", title: "Read your terminal" }
+  if (ctx.name === "terminal_run") {
+    const command = typeof ctx.input.command === "string" ? ctx.input.command : ""
+    return { icon: "▭", title: `Run in your terminal: ${command.slice(0, 120)}` }
+  }
   if (ctx.name === "shell_stop") {
     const id = typeof ctx.input.shell_id === "string" ? ctx.input.shell_id : ""
     return { icon: "■", title: id ? `Stop background command ${id}` : "List background commands" }
