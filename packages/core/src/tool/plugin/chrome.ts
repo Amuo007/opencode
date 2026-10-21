@@ -3,10 +3,11 @@ export * as ChromeTools from "./chrome.js"
 import type { Context } from "@opencode/plugin/effect/plugin"
 import { ToolFailure } from "@opencode/ai"
 import { Tool } from "@opencode/schema/tool"
+import { Global } from "@opencode/util/global"
 import { Effect, Schema } from "effect"
 import { spawn, type ChildProcess } from "node:child_process"
 import { existsSync } from "node:fs"
-import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { Permission } from "../../permission.js"
@@ -337,6 +338,9 @@ export const Plugin = {
   id: "opencode.tool.chrome",
   effect: Effect.fn("ChromeTools.Plugin")(function* (ctx: Context) {
     const permission = yield* Permission.Service
+    const global = yield* Global.Service
+    // Screenshots are also written to disk so the session UI can show them inline.
+    const screenshots = path.join(global.data, "screenshots")
     // One browser per Location, started on first use and closed with the Location.
     let current: Promise<Browser> | undefined
     const browser = () => {
@@ -487,14 +491,18 @@ export const Plugin = {
                       }
                     : {}),
                 })
-                return { data: String(result.data), ...(await location(page)) }
+                const file = path.join(screenshots, `${context.sessionID}-${Date.now()}.png`)
+                await mkdir(screenshots, { recursive: true })
+                await writeFile(file, Buffer.from(String(result.data), "base64"))
+                return { data: String(result.data), file, ...(await location(page)) }
               })
               return {
                 output: { url: shot.url, title: shot.title },
                 content: [
-                  { type: "text" as const, text: `Screenshot of ${shot.url}` },
-                  { type: "file" as const, uri: `data:image/png;base64,${shot.data}`, mime: "image/png", name: "screenshot.png" },
+                  { type: "text" as const, text: `Screenshot of ${shot.url} (saved to ${shot.file})` },
+                  { type: "file" as const, uri: `data:image/png;base64,${shot.data}`, mime: "image/png", name: shot.file },
                 ],
+                metadata: { path: shot.file, url: shot.url },
               }
             }),
         })

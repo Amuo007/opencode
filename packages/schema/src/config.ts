@@ -124,6 +124,7 @@ export const CustomProvider = Schema.Struct({
   }),
   models: Schema.Record(Schema.String, Schema.Struct({ name: Schema.String.pipe(optional) })),
 }).annotate({ identifier: "Config.CustomProvider" })
+export interface CustomProvider extends Schema.Schema.Type<typeof CustomProvider> {}
 
 export const Patch = Schema.Struct({
   shell: Schema.NullOr(Schema.String).pipe(optional),

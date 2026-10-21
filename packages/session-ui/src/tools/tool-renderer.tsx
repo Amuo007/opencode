@@ -364,6 +364,8 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
     case "skill":
       return i18n.t("ui.tool.skill")
     default:
+      if (tool.name.startsWith("chrome_")) return i18n.t("ui.tool.browser")
+      if (tool.name.startsWith("memory_")) return i18n.t("ui.tool.memory")
       return tool.name
   }
 }
@@ -1712,6 +1714,72 @@ ToolRegistry.register({
     )
   },
 })
+
+const textValue = (value: unknown) => (typeof value === "string" && value ? value : undefined)
+
+const chromeActions = ["open", "snapshot", "screenshot", "click", "type", "press", "scroll", "eval", "console", "close"] as const
+
+function chromeSubtitle(action: string, input: Record<string, unknown>) {
+  if (action === "open") return textValue(input.url)
+  if (action === "press") return textValue(input.key)
+  if (action === "scroll") return textValue(input.direction)
+  if (action === "eval") return textValue(input.expression)?.slice(0, 80)
+  if (action !== "click" && action !== "type") return undefined
+  if (typeof input.ref === "number") return `#${input.ref}`
+  return textValue(input.text) ?? textValue(input.selector)
+}
+
+// Built-in headless browser tools; screenshots render inline from the file the tool saved.
+const ChromeTool: ToolComponent = (props) => {
+  const i18n = useI18n()
+  const action = () => props.tool.slice("chrome_".length)
+  const image = createMemo(() =>
+    props.status === "completed" && action() === "screenshot" ? textValue(props.metadata.path) : undefined,
+  )
+  return (
+    <BasicTool
+      {...props}
+      icon="outline-globe"
+      hasContent={!!image()}
+      defaultOpen={props.defaultOpen ?? action() === "screenshot"}
+      defer
+      onOpenChange={(open) => {
+        props.onOpenChange?.(open)
+        props.onContentRendered?.()
+      }}
+      trigger={{
+        title: i18n.t(`ui.tool.chrome.${action()}` as "ui.tool.chrome.open"),
+        subtitle: chromeSubtitle(action(), props.input),
+      }}
+    >
+      <Show when={image()} keyed>
+        {(path) => <ReadImage path={path} onContentRendered={props.onContentRendered} />}
+      </Show>
+    </BasicTool>
+  )
+}
+
+chromeActions.forEach((action) => ToolRegistry.register({ name: `chrome_${action}`, render: ChromeTool }))
+
+const MemoryTool: ToolComponent = (props) => {
+  const i18n = useI18n()
+  const action = () => props.tool.slice("memory_".length)
+  return (
+    <BasicTool
+      {...props}
+      icon="bullet-list"
+      hideDetails
+      trigger={{
+        title: i18n.t(`ui.tool.memory.${action()}` as "ui.tool.memory.save"),
+        subtitle: textValue(props.input.name),
+      }}
+    />
+  )
+}
+
+;(["save", "read", "delete"] as const).forEach((action) =>
+  ToolRegistry.register({ name: `memory_${action}`, render: MemoryTool }),
+)
 
 ToolRegistry.register({
   name: "websearch",
