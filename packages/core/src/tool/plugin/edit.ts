@@ -283,7 +283,10 @@ export const Plugin = {
               })
               if (replacements === 0) {
                 return yield* new ToolFailure({
-                  message: `Could not find oldString in ${input.path}. It must match exactly, including whitespace and indentation.`,
+                  message: `Could not find oldString in ${input.path}. It must match exactly, including whitespace and indentation.${
+                    // A notebook's source is JSON-escaped on disk, so text copied from its cells never matches.
+                    input.path.toLowerCase().endsWith(".ipynb") ? " For Jupyter notebooks use notebook_edit instead." : ""
+                  }`,
                 })
               }
               if (replacements > 1 && input.replaceAll !== true) {
