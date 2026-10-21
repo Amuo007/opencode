@@ -690,6 +690,65 @@ export const Plugin = {
         })
 
         editor.add({
+          name: "hover",
+          options,
+          description:
+            "Move the mouse over an element by ref, CSS selector or visible text, or over x/y coordinates, to open hover menus or show tooltips. Take a chrome_snapshot or chrome_screenshot afterwards to see what appeared.",
+          input: Schema.Struct({
+            ...Target,
+            x: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport x coordinate" }),
+            y: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport y coordinate" }),
+          }),
+          output: PageOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const output = yield* run("Could not hover", async (page) => {
+                const point =
+                  input.x !== undefined && input.y !== undefined
+                    ? { x: input.x, y: input.y }
+                    : await pointAt(page, input)
+                await page.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y })
+                await settle()
+                return location(page)
+              })
+              return { output, content: `Hovering. On ${output.url} (${output.title || "untitled"}).` }
+            }),
+        })
+
+        editor.add({
+          name: "upload",
+          options,
+          description:
+            "Attach files to a file input (<input type=file>) found by ref, CSS selector or visible text. Paths are relative to the project directory.",
+          input: Schema.Struct({
+            ...Target,
+            paths: Schema.Array(Schema.String).annotate({ description: "Files to attach" }),
+          }),
+          output: PageOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              const files = input.paths.map((item) => path.resolve(ctx.location.directory, item))
+              yield* allow(context, "*", { ...input, files })
+              const output = yield* run("Could not attach the files", async (page) => {
+                const missing = files.filter((file) => !existsSync(file))
+                if (missing.length) throw new Error(`No such file: ${missing.join(", ")}`)
+                await pointAt(page, input)
+                const document = await page.page.send("DOM.getDocument", { depth: 0 })
+                const found = await page.page.send("DOM.querySelector", {
+                  nodeId: (document.root as { nodeId: number }).nodeId,
+                  selector: "[data-oc-target]",
+                })
+                if (!found.nodeId) throw new Error("The element is gone; take a new chrome_snapshot")
+                await page.page.send("DOM.setFileInputFiles", { files, nodeId: found.nodeId })
+                await settle()
+                return location(page)
+              })
+              return { output, content: `Attached ${files.length} file(s). On ${output.url}.` }
+            }),
+        })
+
+        editor.add({
           name: "type",
           options,
           description:

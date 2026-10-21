@@ -1749,6 +1749,8 @@ const chromeActions = [
   "press",
   "select",
   "wait",
+  "hover",
+  "upload",
   "resize",
   "scroll",
   "eval",
@@ -1767,7 +1769,8 @@ function chromeSubtitle(action: string, input: Record<string, unknown>) {
       textValue(input.preset) ?? (typeof input.width === "number" ? `${input.width}x${input.height ?? ""}` : undefined)
     )
   if (action === "eval") return textValue(input.expression)?.slice(0, 80)
-  if (action !== "click" && action !== "type") return undefined
+  if (action === "upload" && Array.isArray(input.paths)) return input.paths.join(", ")
+  if (action !== "click" && action !== "type" && action !== "hover") return undefined
   if (typeof input.ref === "number") return `#${input.ref}`
   return textValue(input.text) ?? textValue(input.selector)
 }

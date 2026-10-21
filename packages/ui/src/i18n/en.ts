@@ -203,6 +203,8 @@ const source = {
   "ui.tool.chrome.select": "Choose option",
   "ui.tool.chrome.wait": "Wait for page",
   "ui.tool.chrome.resize": "Resize viewport",
+  "ui.tool.chrome.hover": "Hover",
+  "ui.tool.chrome.upload": "Upload file",
   "ui.tool.chrome.scroll": "Scroll",
   "ui.tool.chrome.eval": "Run script",
   "ui.tool.chrome.console": "Console",
