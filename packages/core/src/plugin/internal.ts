@@ -102,6 +102,7 @@ import { ProviderPlugins } from "./provider.js"
 import { OpencodePlugin } from "./provider/opencode.js"
 import { WebSearchPlugins } from "./websearch/index.js"
 import { ShellHooksPlugin } from "./shell-hooks.js"
+import { GoalPlugin } from "./goal.js"
 import { SkillPlugin } from "./skill.js"
 import { VcsHgPlugin } from "./vcs/hg.js"
 import { ToolInputRepairPlugin } from "./tool-input-repair.js"
@@ -229,6 +230,7 @@ const pre = [
   AgentPlugin.Plugin,
   PlanPlugin.Plugin,
   ShellHooksPlugin.Plugin,
+  GoalPlugin.Plugin,
   CommandPlugin.Plugin,
   SkillPlugin.Plugin,
   VcsHgPlugin.Plugin,
