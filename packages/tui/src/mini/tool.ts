@@ -333,12 +333,27 @@ function displayPath(p: ToolProps, input?: string, opts: { home?: boolean } = {}
   return toolPath(input, { ...opts, directory: p.frame.directory })
 }
 
+const namespacedTools = [
+  { prefix: "chrome_", label: "Browser", icon: "◎" },
+  { prefix: "memory_", label: "Memory", icon: "✎" },
+]
+const detailKeys = ["url", "name", "key", "query", "text", "selector", "direction", "expression"]
+
 function fallbackInline(ctx: ToolFrame): ToolInline {
-  const title = Object.keys(ctx.input).length > 0 ? JSON.stringify(ctx.input) : "Unknown"
+  const namespaced = namespacedTools.find((item) => ctx.name.startsWith(item.prefix))
+  if (namespaced) {
+    const detail = detailKeys.map((key) => ctx.input[key]).find((value) => typeof value === "string" && value)
+    const ref = typeof ctx.input.ref === "number" ? ` #${ctx.input.ref}` : ""
+    return {
+      icon: namespaced.icon,
+      title: `${namespaced.label} ${ctx.name.slice(namespaced.prefix.length)}${ref}${detail ? ` ${String(detail).slice(0, 120)}` : ""}`,
+    }
+  }
+  const title = Object.keys(ctx.input).length > 0 ? JSON.stringify(ctx.input) : ""
 
   return {
     icon: "⚙",
-    title: `${ctx.name} ${title}`,
+    title: title ? `${ctx.name} ${title}` : ctx.name,
   }
 }
 
