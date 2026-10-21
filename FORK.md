@@ -25,6 +25,7 @@ Or run from source with `bun run dev` in the repo root. It reads your normal `~/
 | `memory_save`, `memory_read`, `memory_delete` | Persistent per-project memory. One Markdown file per fact plus a `MEMORY.md` index that is added to every request, so it survives new sessions and compaction. Stored under `<data>/memory/<project>/`. |
 | `notebook_read`, `notebook_edit` | Read Jupyter notebooks as cells with outputs; replace, insert or delete cells (outputs of edited code cells are cleared). Parallel edits to one notebook are serialized. |
 | `plan_exit` | Plan mode's finish line. The Plan agent presents its plan; you approve it in a question card (or type changes) and the session switches to Build and starts implementing. |
+| `notify` | Desktop notification (macOS, Linux, Windows) when a long task finishes or needs you. |
 | `goal_complete` + `/goal` | `/goal <condition>` makes the agent keep working, turn after turn, until it calls `goal_complete` with evidence (max 25 rounds). `/goal stop` ends it. |
 
 ## Hooks
@@ -50,6 +51,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 ## Commands
 
 - `/goal <condition>` and `/goal stop` (see above)
+- `/loop <interval> <prompt>` repeats a prompt (e.g. `/loop 10m check the deploy`, minimum 30 s, up to 100 runs); `/loop stop` ends it
 - `/security-review [commit|branch|pr]`: a focused security review of your changes with severities and exploit scenarios
 - `/memory [request]`: show, add, forget or review the agent's saved memories
 - Existing: `/init`, `/review`, and your custom commands
