@@ -87,6 +87,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 
 - **Dark by default**: the app starts in the dark theme; pick System or Light in Settings → Appearance.
 - **Agent browser panel** (side panel *+* menu → *Agent browser*, or `/browser`): a live view of the headless Chrome the agent drives with its `chrome_*` tools, refreshed every second. Type a URL or `localhost:3000`, click, scroll, type and paste into the page; the agent sees the same page, so you can set something up and ask it to continue. It opens by itself when the agent starts using its browser. API: `GET`/`POST /api/experimental/browser`.
+- **Settings → Usage** (or `/usage`): sessions, prompts, model calls, tool calls, input/output/reasoning/cache tokens, cost, active days and streak, a per-day chart and a per-model breakdown, for today, 7 days, 30 days or all time.
 - **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
 - **Settings → Extensions → Tools**: switch the agent's tool groups on or off (browser, web search, web fetch, memory, your terminals, screen capture, code intelligence, notifications).
 - **Settings → Extensions → Memory**: every project's saved memories with type, description and content, and a delete button.

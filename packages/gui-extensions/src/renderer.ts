@@ -17,6 +17,8 @@ import browser from "./browser"
 import browserRenderer from "./browser/renderer"
 import agentBrowser from "./agent-browser"
 import agentBrowserRenderer from "./agent-browser/renderer"
+import usage from "./usage"
+import usageRenderer from "./usage/renderer"
 import pairing from "./pairing"
 import pairingRenderer from "./pairing/renderer"
 import updater from "./updater"
@@ -47,6 +49,7 @@ export const builtins = Extension.compose(
   { ...details, renderer: eager(detailsRenderer) },
   { ...browser, renderer: eager(browserRenderer) },
   { ...agentBrowser, renderer: eager(agentBrowserRenderer) },
+  { ...usage, renderer: eager(usageRenderer) },
   { ...pairing, renderer: eager(pairingRenderer) },
   { ...updater, renderer: eager(updaterRenderer) },
   { ...ssh, renderer: eager(sshRenderer) },

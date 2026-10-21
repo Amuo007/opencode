@@ -8,6 +8,7 @@ import review from "./review"
 import details from "./details"
 import browser from "./browser"
 import agentBrowser from "./agent-browser"
+import usage from "./usage"
 import pairing from "./pairing"
 import updater from "./updater"
 import ssh from "./ssh"
@@ -28,6 +29,7 @@ export const builtins = Extension.compose(
   details,
   { ...browser, main: () => import("./browser/main") },
   agentBrowser,
+  usage,
   { ...pairing, main: () => import("./pairing/main") },
   { ...updater, main: () => import("./updater/main") },
   { ...ssh, main: () => import("./ssh/main") },
