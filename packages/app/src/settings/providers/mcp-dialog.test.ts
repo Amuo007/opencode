@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { buildConfig, parseCommand, parsePairs, validName } from "./mcp-dialog"
+import { buildConfig, parseCommand, parseMcpJson, parsePairs, validName } from "./mcp-dialog"
 
 describe("MCP dialog helpers", () => {
   test("splits commands and keeps quoted arguments together", () => {
@@ -37,5 +37,56 @@ describe("MCP dialog helpers", () => {
       type: "remote",
       url: "https://mcp.example.com/mcp",
     })
+  })
+})
+
+describe("MCP JSON snippets", () => {
+  test("reads the Claude Desktop and Cursor format with several servers", () => {
+    const text = `{
+      "mcpServers": {
+        "github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"], "env": { "GITHUB_TOKEN": "x", "DEBUG": 1 } },
+        "linear": { "type": "http", "url": "https://mcp.linear.app/mcp", "headers": { "Authorization": "Bearer y" } }
+      }
+    }`
+    expect(parseMcpJson(text, "")).toEqual([
+      {
+        name: "github",
+        config: {
+          type: "local",
+          command: ["npx", "-y", "@modelcontextprotocol/server-github"],
+          environment: { GITHUB_TOKEN: "x", DEBUG: "1" },
+        },
+      },
+      {
+        name: "linear",
+        config: { type: "remote", url: "https://mcp.linear.app/mcp", headers: { Authorization: "Bearer y" } },
+      },
+    ])
+  })
+
+  test("reads VS Code, OpenCode and bare entries", () => {
+    expect(parseMcpJson(`{ "servers": { "fs": { "type": "stdio", "command": "npx", "args": ["server-fs", "/tmp"] } } }`, "")).toEqual([
+      { name: "fs", config: { type: "local", command: ["npx", "server-fs", "/tmp"] } },
+    ])
+    expect(parseMcpJson(`{ "mcp": { "wiki": { "type": "remote", "url": "https://mcp.deepwiki.com/mcp" } } }`, "")).toEqual([
+      { name: "wiki", config: { type: "remote", url: "https://mcp.deepwiki.com/mcp" } },
+    ])
+    expect(parseMcpJson(`"time": { "command": "uvx mcp-server-time --local-timezone UTC" },`, "")).toEqual([
+      { name: "time", config: { type: "local", command: ["uvx", "mcp-server-time", "--local-timezone", "UTC"] } },
+    ])
+  })
+
+  test("names a single server object from the Name field", () => {
+    expect(parseMcpJson(`{ "command": "npx", "args": ["-y", "x"] }`, "tools")).toEqual([
+      { name: "tools", config: { type: "local", command: ["npx", "-y", "x"] } },
+    ])
+    expect(parseMcpJson(`{ "url": "https://x.dev/mcp" }`, "")).toBe("name")
+  })
+
+  test("explains what is wrong", () => {
+    expect(parseMcpJson("  ", "")).toBe("empty")
+    expect(parseMcpJson("{ nope", "")).toBe("json")
+    expect(parseMcpJson(`{ "mcpServers": { "a": { "foo": 1 } } }`, "")).toBe("servers")
+    expect(parseMcpJson(`{ "mcpServers": { "my server": { "command": "x" } } }`, "")).toBe("name")
   })
 })

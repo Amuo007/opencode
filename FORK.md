@@ -94,7 +94,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Dark by default**: the app starts in the dark theme; pick System or Light in Settings → Appearance.
 - **Agent browser panel** (side panel *+* menu → *Agent browser*, or `/browser`): a live view of the headless Chrome the agent drives with its `chrome_*` tools, refreshed every second. Type a URL or `localhost:3000`, click, scroll, type and paste into the page, or **Shift+click an element** to attach a comment about it to your message ("make this button green"); the agent sees the same page, so you can set something up and ask it to continue. It opens by itself when the agent opens its browser or moves it to another page, unless you closed it in that session. API: `GET`/`POST /api/experimental/browser`.
 - **Settings → Usage** (or `/usage`): sessions, prompts, model calls, tool calls, input/output/reasoning/cache tokens, cost, active days and streak, a per-day chart and a per-model breakdown, for today, 7 days, 30 days or all time.
-- **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
+- **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately. *Paste JSON* takes the snippet from an MCP server's README as is (`{"mcpServers": …}` from Claude Desktop or Cursor, VS Code's `{"servers": …}`, or OpenCode's `mcp`) and adds every server in it.
 - **Settings → Extensions → Skills → New skill**: write a skill (name, when to use it, instructions) without touching files; it is saved to `~/.config/opencode/skills/<name>/SKILL.md` and picked up at once. Skills in that folder get edit and remove buttons.
 - **Settings → Extensions → Tools**: switch the agent's tool groups on or off (browser, web search, web fetch, memory, your terminals, screen capture, code intelligence, notifications).
 - **Settings → Extensions → Memory**: every project's saved memories with type, description and content, an **Add memory** button (pick the project and type) and a delete button.
@@ -112,6 +112,9 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
   only the wallpaper.
 - The agent browser is headless Chrome: sites that block automation or need your logins are better handled in
   your own browser.
+- Background commands end when the server stops. The background service (used by `opencode`, `pair -o` and the
+  web app it serves) tells each session afterwards; a plain `opencode serve` does not, so its session header can
+  keep showing *1 running* for a command that is gone.
 
 ## Notes
 
