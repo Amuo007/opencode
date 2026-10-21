@@ -29,6 +29,8 @@ import { createSessionRevert } from "../revert"
 import { SessionComposerRegion } from "./session-composer-region"
 import { createSessionComposerController, type SessionComposerController } from "./controller"
 import { SessionQueuePanel } from "./queue-panel"
+import { SessionTodoPanel } from "./todo-panel"
+import { sessionTodos } from "./todo"
 import { resolveSessionComposerSelection } from "./selection"
 import { createSessionRequestModel } from "../requests/model"
 import type { Region } from "@/runtime/extension/panels"
@@ -343,6 +345,8 @@ export function ActiveSessionComposerRegion(props: {
     return { directory: info.location.directory, sessionID: info.id, projectID: info.projectID }
   })
 
+  const todos = createMemo(() => sessionTodos(props.session.history.messages(), props.session.data.revertMessageID()))
+
   return (
     <SessionComposerRegion
       controller={props.model.region}
@@ -352,6 +356,7 @@ export function ActiveSessionComposerRegion(props: {
           keyed
           fallback={
             <div class="relative">
+              <SessionTodoPanel todos={todos().todos} latest={todos().latest} />
               <SessionQueuePanel queue={props.model.queue} />
               <div class="relative z-10">
                 <Composer

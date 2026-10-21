@@ -37,9 +37,14 @@ const names = (registry: Tool.Interface) =>
   toolDefinitions(registry).pipe(Effect.map((definitions) => definitions.map((definition) => definition.name)))
 
 describe("TodoTool", () => {
-  it.effect("is absent unless experimental.todo is enabled", () =>
+  it.effect("is on by default", () =>
     Effect.gen(function* () {
-      expect(yield* names(yield* setup(undefined))).not.toContain(TodoTool.name)
+      expect(yield* names(yield* setup(undefined))).toContain(TodoTool.name)
+    }),
+  )
+
+  it.effect("is absent when experimental.todo is false", () =>
+    Effect.gen(function* () {
       expect(yield* names(yield* setup(new ConfigExperimental.Info({ todo: false })))).not.toContain(TodoTool.name)
     }),
   )
