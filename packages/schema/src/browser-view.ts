@@ -12,6 +12,10 @@ export const Info = Schema.Struct({
   height: Schema.Number,
   /** A JPEG of the viewport, base64 encoded. Empty while no browser is open. */
   image: Schema.String,
+  /** The element an inspect action found. */
+  element: Schema.optional(
+    Schema.Struct({ label: Schema.String, selector: Schema.String, text: Schema.String, role: Schema.String }),
+  ),
 }).annotate({ identifier: "BrowserView.Info" })
 
 /** Something the user does in the live view: the agent's browser performs it on its page. */
@@ -19,6 +23,7 @@ export type Action = Schema.Schema.Type<typeof Action>
 export const Action = Schema.Union([
   Schema.Struct({ type: Schema.Literal("navigate"), url: Schema.String }),
   Schema.Struct({ type: Schema.Literal("click"), x: Schema.Number, y: Schema.Number }),
+  Schema.Struct({ type: Schema.Literal("inspect"), x: Schema.Number, y: Schema.Number }),
   Schema.Struct({ type: Schema.Literal("scroll"), x: Schema.Number, y: Schema.Number, deltaY: Schema.Number }),
   Schema.Struct({ type: Schema.Literal("type"), text: Schema.String }),
   Schema.Struct({ type: Schema.Literal("key"), key: Schema.String }),

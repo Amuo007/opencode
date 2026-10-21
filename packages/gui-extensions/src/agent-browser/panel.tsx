@@ -2,7 +2,7 @@ import type { BrowserViewInfo } from "@opencode/client/promise"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
 import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js"
-import { usePanel, type MountedSession } from "../sdk"
+import { usePanel, type MountedSession, type SessionScreen } from "../sdk"
 
 type Payload = Parameters<MountedSession["server"]["client"]["browserView"]["act"]>[0]["payload"]
 
@@ -25,12 +25,21 @@ const KEYS = new Set([
 ])
 
 /** Shows the agent's headless browser page, refreshed every second, and forwards clicks, scrolling and typing. */
-export default function AgentBrowserPanel(props: { session: MountedSession; t: (key: string) => string }) {
+type Picked = NonNullable<BrowserViewInfo["element"]> & { url: string }
+
+export default function AgentBrowserPanel(props: {
+  session: MountedSession
+  screen: SessionScreen
+  t: (key: string) => string
+}) {
   const [view, setView] = createSignal<BrowserViewInfo>()
   const [address, setAddress] = createSignal("")
   const [editing, setEditing] = createSignal(false)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal<string>()
+  // Shift+click picks an element; its comment goes to the chat composer as a note the agent reads.
+  const [picked, setPicked] = createSignal<Picked>()
+  const [note, setNote] = createSignal("")
   const panel = usePanel()
   const location = () => ({ directory: props.session.directory })
   const client = () => props.session.server.client
@@ -78,6 +87,41 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
       }
     })
     return queue
+  }
+
+  const pick = async (at: { x: number; y: number }) => {
+    setError(undefined)
+    try {
+      const result = (await client().browserView.act({ location: location(), payload: { type: "inspect", ...at } }))
+        .data
+      if (result.element) {
+        setPicked({ ...result.element, url: result.url })
+        setNote("")
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    }
+  }
+
+  const attach = () => {
+    const current = picked()
+    if (!current || !note().trim()) return
+    // Page-provided strings are quoted so they read as data, not as part of the user's request.
+    const details = [
+      current.role ? `role ${current.role}` : undefined,
+      current.text ? `text ${JSON.stringify(current.text.slice(0, 80))}` : undefined,
+      current.selector ? `selector ${JSON.stringify(current.selector)}` : undefined,
+    ].filter((item) => item !== undefined)
+    props.screen.composer.attach({
+      type: "note",
+      origin: "agent-browser",
+      commentID: crypto.randomUUID(),
+      label: current.label,
+      icon: "select-element",
+      subject: `the ${JSON.stringify(current.label)} element in the agent's browser at ${current.url}${details.length ? ` (${details.join("; ")})` : ""}`,
+      comment: note().trim(),
+    })
+    setPicked(undefined)
   }
 
   createEffect(on(panel.visible, (visible) => visible && void poll(), { defer: true }))
@@ -187,6 +231,37 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
           />
         </Show>
       </form>
+      <Show when={picked()}>
+        {(current) => (
+          <form
+            class="flex items-center gap-2 border-b border-v2-border-border-muted px-2 py-1.5"
+            onSubmit={(event) => {
+              event.preventDefault()
+              attach()
+            }}
+          >
+            <Icon name="select-element" class="shrink-0 text-v2-icon-icon-muted" />
+            <span class="max-w-40 shrink-0 truncate text-12-medium text-v2-text-text-base" title={current().selector}>
+              {current().label}
+            </span>
+            <input
+              autofocus
+              class="min-w-0 flex-1 rounded-md border border-v2-border-border-base bg-v2-background-bg-layer-01 px-2 py-1 text-13-regular text-v2-text-text-base outline-none focus:border-v2-border-border-strong"
+              placeholder={props.t("comment.placeholder")}
+              value={note()}
+              onInput={(event) => setNote(event.currentTarget.value)}
+              onKeyDown={(event) => event.key === "Escape" && setPicked(undefined)}
+            />
+            <IconButton
+              type="button"
+              variant="ghost"
+              icon={<Icon name="close" />}
+              aria-label={props.t("comment.cancel")}
+              onClick={() => setPicked(undefined)}
+            />
+          </form>
+        )}
+      </Show>
       <Show when={error()}>
         <div class="px-3 py-1.5 text-12-regular text-v2-text-text-muted truncate" title={error()}>
           {error()}
@@ -208,11 +283,15 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
               tabindex="0"
               class="w-full cursor-pointer rounded-md shadow outline-none focus:ring-1 focus:ring-v2-border-border-strong"
               alt={props.t("screen.label")}
-              title={current().title}
+              title={`${current().title} · ${props.t("hint")}`}
               src={`data:image/jpeg;base64,${current().image}`}
               draggable={false}
               onClick={(event) => {
                 event.currentTarget.focus()
+                if (event.shiftKey) {
+                  void pick(point(event))
+                  return
+                }
                 void act({ type: "click", ...point(event) })
               }}
               onWheel={onWheel}

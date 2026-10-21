@@ -11,5 +11,9 @@ export default {
   reload: "Reload",
   live: "Live",
   external: "Open in a new browser tab",
-  "screen.label": "Agent browser page. Click to interact, scroll to scroll, type while focused.",
+  hint: "Shift+click an element to comment on it",
+  "comment.placeholder": "What should change here? Enter adds it to your message",
+  "comment.cancel": "Cancel comment",
+  "screen.label":
+    "Agent browser page. Click to interact, shift+click to comment on an element, scroll to scroll, type while focused.",
 }

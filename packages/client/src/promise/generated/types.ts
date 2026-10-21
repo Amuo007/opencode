@@ -269,6 +269,7 @@ export type BrowserViewInfo = {
   width: number
   height: number
   image: string
+  element?: { label: string; selector: string; text: string; role: string } | undefined
 }
 
 export type SkillEditInfo = { directory: string; path?: string | undefined }
@@ -5618,6 +5619,7 @@ export type BrowserViewActInput = {
   readonly payload:
     | { readonly type: "navigate"; readonly url: string }
     | { readonly type: "click"; readonly x: number; readonly y: number }
+    | { readonly type: "inspect"; readonly x: number; readonly y: number }
     | { readonly type: "scroll"; readonly x: number; readonly y: number; readonly deltaY: number }
     | { readonly type: "type"; readonly text: string }
     | { readonly type: "key"; readonly key: string }

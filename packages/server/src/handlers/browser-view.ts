@@ -31,7 +31,10 @@ export const BrowserViewHandler = HttpApiBuilder.group(Api, "server.browserView"
         if (!browser) return yield* new InvalidRequestError({ message: "The browser tools are not available here" })
         return yield* response(
           Effect.tryPromise({
-            try: () => browser.act(ctx.payload).then(() => browser.view()),
+            try: () =>
+              browser
+                .act(ctx.payload)
+                .then(async (element) => ({ ...(await browser.view()), ...(element ? { element } : {}) })),
             catch: (error) =>
               new InvalidRequestError({ message: error instanceof Error ? error.message : String(error) }),
           }),

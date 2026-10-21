@@ -1879,6 +1879,9 @@ export type BrowserViewGetOutput = {
     readonly width: number
     readonly height: number
     readonly image: string
+    readonly element?:
+      | { readonly label: string; readonly selector: string; readonly text: string; readonly role: string }
+      | undefined
   }
 }
 export type BrowserViewGetOperation<E = never> = (input?: BrowserViewGetInput) => Effect.Effect<BrowserViewGetOutput, E>
@@ -1888,6 +1891,7 @@ export type BrowserViewActInput = {
   readonly payload:
     | { readonly type: "navigate"; readonly url: string }
     | { readonly type: "click"; readonly x: number; readonly y: number }
+    | { readonly type: "inspect"; readonly x: number; readonly y: number }
     | { readonly type: "scroll"; readonly x: number; readonly y: number; readonly deltaY: number }
     | { readonly type: "type"; readonly text: string }
     | { readonly type: "key"; readonly key: string }
@@ -1902,6 +1906,9 @@ export type BrowserViewActOutput = {
     readonly width: number
     readonly height: number
     readonly image: string
+    readonly element?:
+      | { readonly label: string; readonly selector: string; readonly text: string; readonly role: string }
+      | undefined
   }
 }
 export type BrowserViewActOperation<E = never> = (input: BrowserViewActInput) => Effect.Effect<BrowserViewActOutput, E>

@@ -76,7 +76,7 @@ const setup: Setup<typeof AgentBrowser> = (ctx) => {
     list: (input) => (input.open.includes("main") ? [tab] : []),
     render: (props) => (
       <Suspense>
-        <AgentBrowserPanel session={props.session} t={ctx.t} />
+        <AgentBrowserPanel session={props.session} screen={props.screen} t={ctx.t} />
       </Suspense>
     ),
   })

@@ -415,11 +415,35 @@ export type View = { open: boolean; url: string; title: string; width: number; h
 export type Action =
   | { type: "navigate"; url: string }
   | { type: "click"; x: number; y: number }
+  | { type: "inspect"; x: number; y: number }
   | { type: "scroll"; x: number; y: number; deltaY: number }
   | { type: "type"; text: string }
   | { type: "key"; key: string }
   | { type: "back" | "forward" | "reload" }
-export type Live = { view: (options?: { image?: boolean }) => Promise<View>; act: (action: Action) => Promise<void> }
+export type PickedElement = { label: string; selector: string; text: string; role: string }
+export type Live = {
+  view: (options?: { image?: boolean }) => Promise<View>
+  act: (action: Action) => Promise<PickedElement | void>
+}
+
+// Describes the element at a viewport point (or its interactive ancestor) for a comment in the chat.
+const inspectScript = (x: number, y: number) => `(() => {
+  let el = document.elementFromPoint(${x}, ${y})
+  if (!el) return null
+  el = el.closest("a,button,input,select,textarea,label,summary,[role],[onclick]") || el
+  const first = typeof el.className === "string" ? el.className.trim().split(/\\s+/)[0] : ""
+  const label = el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + (first ? "." + first : "")
+  const path = []
+  let node = el
+  while (node && node.nodeType === 1 && path.length < 5) {
+    if (node.id) { path.unshift("#" + CSS.escape(node.id)); break }
+    const parent = node.parentElement
+    const same = parent ? [...parent.children].filter((child) => child.tagName === node.tagName) : []
+    path.unshift(node.tagName.toLowerCase() + (same.length > 1 ? ":nth-of-type(" + (same.indexOf(node) + 1) + ")" : ""))
+    node = parent
+  }
+  return { label, selector: path.join(" > "), text: (el.innerText || el.value || "").trim().slice(0, 120), role: el.getAttribute("role") || "" }
+})()`
 
 export const closedView: View = { open: false, url: "", title: "", ...VIEWPORT, image: "" }
 
@@ -572,6 +596,11 @@ export const Plugin = {
           deltaY: action.deltaY,
         })
         return settle().then(() => undefined)
+      }
+      if (action.type === "inspect") {
+        const element = await page.evaluate(inspectScript(action.x, action.y))
+        if (!element) throw new Error("No element at that point")
+        return element as PickedElement
       }
       if (action.type !== "click") return
       const point = { x: action.x, y: action.y, button: "left", clickCount: 1 }
