@@ -14,10 +14,11 @@ import { Permission } from "../../permission.js"
 
 // Code intelligence through language servers: go to definition, references, hover, symbols and
 // diagnostics. Servers are found on PATH (with npx fallbacks for TypeScript and Python) or set in
-// the `lsp` config. After a successful edit, errors from an already running server for that file
+// the `lsp` config. After a successful edit, errors from the server for that file (started if installed)
 // are appended to the edit result so the model sees type errors right away.
 
 export const name = "lsp"
+const POST_EDIT_START_MS = 8_000
 
 type ServerSpec = { id: string; extensions: string[]; commands: string[][]; env?: Record<string, string> }
 type LspConfig = typeof ConfigLSP.Info.Type
@@ -101,10 +102,19 @@ export function resolveServer(file: string, config: LspConfig | undefined, has =
   if (config === false) return undefined
   const extension = path.extname(file).toLowerCase()
   const configured = typeof config === "object" ? Object.entries(config) : []
-  const disabled = new Set(configured.filter(([, entry]) => "disabled" in entry && entry.disabled === true).map(([id]) => id))
+  const disabled = new Set(
+    configured.filter(([, entry]) => "disabled" in entry && entry.disabled === true).map(([id]) => id),
+  )
   const custom = configured.flatMap(([id, entry]): ServerSpec[] =>
     "command" in entry && entry.disabled !== true && (entry.extensions ?? []).includes(extension)
-      ? [{ id, extensions: [...(entry.extensions ?? [])], commands: [[...entry.command]], env: entry.env ? { ...entry.env } : undefined }]
+      ? [
+          {
+            id,
+            extensions: [...(entry.extensions ?? [])],
+            commands: [[...entry.command]],
+            env: entry.env ? { ...entry.env } : undefined,
+          },
+        ]
       : [],
   )
   return [...custom, ...defaults.filter((spec) => !disabled.has(spec.id) && spec.extensions.includes(extension))]
@@ -119,7 +129,12 @@ export function decodeFrames(buffer: Buffer) {
   while (true) {
     const end = rest.indexOf("\r\n\r\n")
     if (end === -1) break
-    const length = Number(rest.subarray(0, end).toString("ascii").match(/Content-Length:\s*(\d+)/i)?.[1])
+    const length = Number(
+      rest
+        .subarray(0, end)
+        .toString("ascii")
+        .match(/Content-Length:\s*(\d+)/i)?.[1],
+    )
     if (!Number.isFinite(length) || rest.length < end + 4 + length) break
     messages.push(JSON.parse(rest.subarray(end + 4, end + 4 + length).toString("utf8")))
     rest = rest.subarray(end + 4 + length)
@@ -150,23 +165,27 @@ class Client {
       decoded.messages.forEach((message) => this.receive(message as Record<string, unknown>))
     })
     child.on("exit", () => this.pending.forEach((waiter) => waiter.reject(new Error("Language server exited"))))
-    this.ready = this.request("initialize", {
-      processId: process.pid,
-      rootUri: pathToFileURL(root).href,
-      workspaceFolders: [{ uri: pathToFileURL(root).href, name: path.basename(root) }],
-      capabilities: {
-        textDocument: {
-          synchronization: { didSave: true, dynamicRegistration: false },
-          hover: { contentFormat: ["markdown", "plaintext"] },
-          definition: { linkSupport: true },
-          implementation: { linkSupport: true },
-          references: {},
-          documentSymbol: { hierarchicalDocumentSymbolSupport: true },
-          publishDiagnostics: { relatedInformation: false },
+    this.ready = this.request(
+      "initialize",
+      {
+        processId: process.pid,
+        rootUri: pathToFileURL(root).href,
+        workspaceFolders: [{ uri: pathToFileURL(root).href, name: path.basename(root) }],
+        capabilities: {
+          textDocument: {
+            synchronization: { didSave: true, dynamicRegistration: false },
+            hover: { contentFormat: ["markdown", "plaintext"] },
+            definition: { linkSupport: true },
+            implementation: { linkSupport: true },
+            references: {},
+            documentSymbol: { hierarchicalDocumentSymbolSupport: true },
+            publishDiagnostics: { relatedInformation: false },
+          },
+          workspace: { symbol: {}, configuration: true, workspaceFolders: true },
         },
-        workspace: { symbol: {}, configuration: true, workspaceFolders: true },
       },
-    }, 60_000).then(() => this.notify("initialized", {}))
+      60_000,
+    ).then(() => this.notify("initialized", {}))
   }
 
   get alive() {
@@ -340,9 +359,11 @@ export const Plugin = {
       ),
     )
 
-    const settings = () => Effect.runPromise(config.entries().pipe(Effect.map((entries) => Config.latest(entries, "lsp"))))
+    const settings = () =>
+      Effect.runPromise(config.entries().pipe(Effect.map((entries) => Config.latest(entries, "lsp"))))
 
-    const clientFor = async (file: string, start = true) => {
+    // start: true starts any server, "installed" only one found on PATH (not an npx download).
+    const clientFor = async (file: string, start: boolean | "installed" = true) => {
       const spec = resolveServer(file, await settings().catch(() => undefined))
       if (!spec) return undefined
       const existing = clients.get(spec.id)
@@ -351,7 +372,7 @@ export const Plugin = {
         if (client?.alive) return client
         clients.delete(spec.id)
       }
-      if (!start) return undefined
+      if (!start || (start === "installed" && spec.command[0] === "npx")) return undefined
       const created = Promise.resolve().then(() => {
         const child = spawn(spec.command[0], spec.command.slice(1), {
           cwd: root,
@@ -385,7 +406,9 @@ export const Plugin = {
           return `${relative(file)}:${range.start.line + 1}:${range.start.character + 1}  ${await lineText(file, range.start.line)}`
         }),
       )
-      return lines.length ? lines.join("\n") + (items.length > 100 ? `\n[${items.length - 100} more]` : "") : "No results."
+      return lines.length
+        ? lines.join("\n") + (items.length > 100 ? `\n[${items.length - 100} more]` : "")
+        : "No results."
     }
 
     const formatSymbols = (value: unknown, depth = 0): string[] =>
@@ -421,10 +444,13 @@ export const Plugin = {
       if (input.operation === "workspace_symbols") {
         const anchor = input.path ? path.resolve(ctx.location.directory, input.path) : undefined
         const client = anchor ? await clientFor(anchor) : await [...clients.values()][0]
-        if (!client)
-          throw new Error("No language server is running; pass a path so one can start for that language")
+        if (!client) throw new Error("No language server is running; pass a path so one can start for that language")
         await client.ready
-        return formatSymbols(await client.request("workspace/symbol", { query: input.query ?? "" })).slice(0, 200).join("\n") || "No results."
+        return (
+          formatSymbols(await client.request("workspace/symbol", { query: input.query ?? "" }))
+            .slice(0, 200)
+            .join("\n") || "No results."
+        )
       }
       if (!input.path) throw new Error("path is required")
       const file = path.resolve(ctx.location.directory, input.path)
@@ -437,16 +463,23 @@ export const Plugin = {
       const uri = await client.sync(file, input.operation === "diagnostics" ? 5000 : 0)
       if (input.operation === "diagnostics") {
         const diagnostics = client.diagnostics.get(uri) ?? []
-        return diagnostics.length ? formatDiagnostics(relative(file), diagnostics) : `No problems found in ${relative(file)}.`
+        return diagnostics.length
+          ? formatDiagnostics(relative(file), diagnostics)
+          : `No problems found in ${relative(file)}.`
       }
       if (input.operation === "symbols")
-        return formatSymbols(await client.request("textDocument/documentSymbol", { textDocument: { uri } })).join("\n") || "No symbols."
+        return (
+          formatSymbols(await client.request("textDocument/documentSymbol", { textDocument: { uri } })).join("\n") ||
+          "No symbols."
+        )
       const params = { textDocument: { uri }, position: await position(file, input) }
       if (input.operation === "hover") {
         const result = (await client.request("textDocument/hover", params)) as { contents?: unknown } | null
         const contents = result?.contents
         const text = Array.isArray(contents)
-          ? contents.map((item) => (typeof item === "string" ? item : String((item as { value?: string }).value ?? ""))).join("\n\n")
+          ? contents
+              .map((item) => (typeof item === "string" ? item : String((item as { value?: string }).value ?? "")))
+              .join("\n\n")
           : typeof contents === "string"
             ? contents
             : String((contents as { value?: string } | undefined)?.value ?? "")
@@ -459,7 +492,10 @@ export const Plugin = {
             ? "textDocument/implementation"
             : "textDocument/references"
       return formatLocations(
-        await client.request(method, input.operation === "references" ? { ...params, context: { includeDeclaration: true } } : params),
+        await client.request(
+          method,
+          input.operation === "references" ? { ...params, context: { includeDeclaration: true } } : params,
+        ),
       )
     }
 
@@ -496,7 +532,8 @@ export const Plugin = {
       )
       .pipe(Effect.orDie)
 
-    // After successful edits, report new errors from a language server that is already running.
+    // After successful edits, report new errors from the file's language server. An installed server starts on
+    // the first edit; one that is not ready within POST_EDIT_START_MS is skipped this time and serves the next edit.
     yield* ctx.tool.hook("execute.after", (event) =>
       Effect.gen(function* () {
         if (event.status !== "completed" || !["edit", "write", "patch"].includes(event.tool)) return
@@ -507,7 +544,10 @@ export const Plugin = {
           Promise.all(
             files.map(async (item) => {
               const file = path.resolve(ctx.location.directory, item)
-              const client = await clientFor(file, false).catch(() => undefined)
+              const client = await Promise.race([
+                clientFor(file, "installed").catch(() => undefined),
+                new Promise<undefined>((resolve) => setTimeout(resolve, POST_EDIT_START_MS)),
+              ])
               if (!client || !existsSync(file)) return ""
               const uri = await client.sync(file, 3000).catch(() => undefined)
               const errors = uri ? (client.diagnostics.get(uri) ?? []).filter((item) => (item.severity ?? 1) === 1) : []
