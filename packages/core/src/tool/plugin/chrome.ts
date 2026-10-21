@@ -27,6 +27,13 @@ const viewports = {
 }
 const MAX_TEXT = 12_000
 const MAX_LOGS = 200
+const MAX_REQUESTS = 300
+
+type Request = { id: string; method: string; url: string; type: string; status?: number; error?: string }
+
+/** One line per request, e.g. "GET 404 fetch http://localhost:3000/api/items". */
+export const formatRequest = (item: Request) =>
+  `${item.method} ${item.error ? `FAILED (${item.error})` : (item.status ?? "pending")} ${item.type.toLowerCase()} ${item.url}`
 
 export function candidates(platform = process.platform, env = process.env) {
   const configured = [env.OPENCODE_BROWSER_PATH, env.CHROME_PATH].filter((item): item is string => !!item)
@@ -157,6 +164,7 @@ const describeRemote = (value: Record<string, unknown> | undefined) => {
 
 class Browser {
   logs: string[] = []
+  requests: Request[] = []
   private constructor(
     private process: ChildProcess,
     private directory: string,
@@ -203,7 +211,28 @@ class Browser {
       page.send("Log.enable"),
       page.send("Emulation.setDeviceMetricsOverride", { ...VIEWPORT, deviceScaleFactor: 1, mobile: false }),
       page.send("Page.addScriptToEvaluateOnNewDocument", { source: sameTabScript }),
+      page.send("Network.enable"),
     ])
+    const track = (id: unknown) => browser.requests.find((item) => item.id === id)
+    page.on("Network.requestWillBeSent", (params) => {
+      const request = params.request as { url?: string; method?: string } | undefined
+      if (!request?.url || request.url.startsWith("data:")) return
+      browser.requests.push({
+        id: String(params.requestId),
+        method: request.method ?? "GET",
+        url: request.url,
+        type: String(params.type ?? "Other"),
+      })
+      if (browser.requests.length > MAX_REQUESTS) browser.requests.splice(0, browser.requests.length - MAX_REQUESTS)
+    })
+    page.on("Network.responseReceived", (params) => {
+      const entry = track(params.requestId)
+      if (entry) entry.status = Number((params.response as { status?: number } | undefined)?.status)
+    })
+    page.on("Network.loadingFailed", (params) => {
+      const entry = track(params.requestId)
+      if (entry) entry.error = params.canceled ? "canceled" : String(params.errorText ?? "failed")
+    })
     page.on("Runtime.consoleAPICalled", (params) => {
       const args = (params.args as Array<Record<string, unknown>> | undefined) ?? []
       browser.log(`console.${String(params.type)}: ${args.map(describeRemote).join(" ")}`)
@@ -966,6 +995,33 @@ export const Plugin = {
                 const lines = page.logs.length ? page.logs.join("\n") : "(no console messages)"
                 if (input.clear === true) page.logs = []
                 return lines
+              })
+              return { output: { output }, content: output }
+            }),
+        })
+
+        editor.add({
+          name: "network",
+          options,
+          description:
+            "List the page's recent network requests (newest last) with method, status and type, to debug failing API calls or missing assets. Filter by URL text, or show only failures (status 400+ or no response).",
+          input: Schema.Struct({
+            filter: Schema.optionalKey(Schema.String).annotate({
+              description: "Only requests whose URL contains this",
+            }),
+            failed: Schema.optionalKey(Schema.Boolean).annotate({ description: "Only failed requests" }),
+          }),
+          output: TextOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const output = yield* run("Could not read network requests", async (page) => {
+                const lines = page.requests
+                  .filter((item) => !input.filter || item.url.includes(input.filter))
+                  .filter((item) => input.failed !== true || item.error !== undefined || (item.status ?? 0) >= 400)
+                  .slice(-100)
+                  .map(formatRequest)
+                return lines.length ? lines.join("\n") : "(no matching requests)"
               })
               return { output: { output }, content: output }
             }),

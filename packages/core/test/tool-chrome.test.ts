@@ -41,3 +41,17 @@ describe("agent browser addresses", () => {
     expect(ChromeTools.closedView.open).toBe(false)
   })
 })
+
+describe("agent browser network log", () => {
+  test("formats requests with status or failure", () => {
+    expect(ChromeTools.formatRequest({ id: "1", method: "GET", url: "http://x/api", type: "Fetch", status: 404 })).toBe(
+      "GET 404 fetch http://x/api",
+    )
+    expect(
+      ChromeTools.formatRequest({ id: "2", method: "POST", url: "http://x/save", type: "XHR", error: "net::ERR_FAILED" }),
+    ).toBe("POST FAILED (net::ERR_FAILED) xhr http://x/save")
+    expect(ChromeTools.formatRequest({ id: "3", method: "GET", url: "http://x/slow", type: "Script" })).toBe(
+      "GET pending script http://x/slow",
+    )
+  })
+})
