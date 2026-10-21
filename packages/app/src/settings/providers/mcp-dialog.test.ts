@@ -65,12 +65,12 @@ describe("MCP JSON snippets", () => {
   })
 
   test("reads VS Code, OpenCode and bare entries", () => {
-    expect(parseMcpJson(`{ "servers": { "fs": { "type": "stdio", "command": "npx", "args": ["server-fs", "/tmp"] } } }`, "")).toEqual([
-      { name: "fs", config: { type: "local", command: ["npx", "server-fs", "/tmp"] } },
-    ])
-    expect(parseMcpJson(`{ "mcp": { "wiki": { "type": "remote", "url": "https://mcp.deepwiki.com/mcp" } } }`, "")).toEqual([
-      { name: "wiki", config: { type: "remote", url: "https://mcp.deepwiki.com/mcp" } },
-    ])
+    expect(
+      parseMcpJson(`{ "servers": { "fs": { "type": "stdio", "command": "npx", "args": ["server-fs", "/tmp"] } } }`, ""),
+    ).toEqual([{ name: "fs", config: { type: "local", command: ["npx", "server-fs", "/tmp"] } }])
+    expect(
+      parseMcpJson(`{ "mcp": { "wiki": { "type": "remote", "url": "https://mcp.deepwiki.com/mcp" } } }`, ""),
+    ).toEqual([{ name: "wiki", config: { type: "remote", url: "https://mcp.deepwiki.com/mcp" } }])
     expect(parseMcpJson(`"time": { "command": "uvx mcp-server-time --local-timezone UTC" },`, "")).toEqual([
       { name: "time", config: { type: "local", command: ["uvx", "mcp-server-time", "--local-timezone", "UTC"] } },
     ])

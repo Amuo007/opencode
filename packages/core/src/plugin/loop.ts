@@ -13,7 +13,9 @@ export const MAX_RUNS = 100
 export const MIN_SECONDS = 30
 
 export function parseLoop(text: string) {
-  const match = text.trim().match(/^(\d+(?:\.\d+)?)\s*(s|sec|secs|seconds?|m|min|mins|minutes?|h|hr|hrs|hours?)\s+([\s\S]+)$/i)
+  const match = text
+    .trim()
+    .match(/^(\d+(?:\.\d+)?)\s*(s|sec|secs|seconds?|m|min|mins|minutes?|h|hr|hrs|hours?)\s+([\s\S]+)$/i)
   if (!match) return undefined
   const unit = match[2].toLowerCase()
   const factor = unit.startsWith("h") ? 3600 : unit.startsWith("m") ? 60 : 1
@@ -62,7 +64,9 @@ export const Plugin = define({
               const stopped = yield* stop(input.sessionID)
               yield* ctx.session.synthetic({
                 sessionID: input.sessionID,
-                text: stopped ? "Loop stopped." : "No loop is running. Use /loop <interval> <prompt>, e.g. /loop 10m check the build.",
+                text: stopped
+                  ? "Loop stopped."
+                  : "No loop is running. Use /loop <interval> <prompt>, e.g. /loop 10m check the build.",
               })
               return
             }
@@ -109,7 +113,8 @@ export const Plugin = define({
           execute: (input) =>
             Effect.gen(function* () {
               const command = notifyCommand(input.title, input.message)
-              if (!command) return yield* new ToolFailure({ message: `Notifications are not supported on ${process.platform}` })
+              if (!command)
+                return yield* new ToolFailure({ message: `Notifications are not supported on ${process.platform}` })
               const code = yield* Effect.promise(
                 () =>
                   new Promise<number | null>((resolve) => {

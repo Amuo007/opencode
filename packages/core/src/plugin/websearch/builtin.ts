@@ -44,7 +44,8 @@ export function text(html: string) {
     .replace(/<[^>]*>/g, "")
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+\d*);/gi, (match, code: string) => {
       if (entities[code.toLowerCase()]) return entities[code.toLowerCase()]
-      if (code.startsWith("#x") || code.startsWith("#X")) return String.fromCodePoint(Number.parseInt(code.slice(2), 16))
+      if (code.startsWith("#x") || code.startsWith("#X"))
+        return String.fromCodePoint(Number.parseInt(code.slice(2), 16))
       if (code.startsWith("#")) return String.fromCodePoint(Number.parseInt(code.slice(1), 10))
       return match
     })
@@ -53,7 +54,8 @@ export function text(html: string) {
 }
 
 const attribute = (tag: string, name: string) =>
-  tag.match(new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, "i"))?.[1] ?? tag.match(new RegExp(`\\s${name}\\s*=\\s*'([^']*)'`, "i"))?.[1]
+  tag.match(new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, "i"))?.[1] ??
+  tag.match(new RegExp(`\\s${name}\\s*=\\s*'([^']*)'`, "i"))?.[1]
 
 const isWebURL = (value: string) => {
   try {
@@ -141,7 +143,8 @@ export const mojeek: Engine = {
         .split(/<li class="r\d*"|<li>\s*<a class="ob"/)
         .slice(1)
         .flatMap((block) => {
-          const anchor = block.match(/<a[^>]*class="ob"[^>]*>([\s\S]*?)<\/a>/) ?? block.match(/<h2[^>]*>\s*<a[^>]*>([\s\S]*?)<\/a>/)
+          const anchor =
+            block.match(/<a[^>]*class="ob"[^>]*>([\s\S]*?)<\/a>/) ?? block.match(/<h2[^>]*>\s*<a[^>]*>([\s\S]*?)<\/a>/)
           const href = anchor ? attribute(anchor[0], "href") : undefined
           if (!anchor || !href) return []
           const title = block.match(/<h2[^>]*>([\s\S]*?)<\/h2>/)?.[1]

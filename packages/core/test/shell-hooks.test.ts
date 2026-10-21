@@ -31,7 +31,13 @@ describe("ShellHooksPlugin", () => {
   })
 
   test("kills commands that time out", async () => {
-    const result = await ShellHooksPlugin.run({ command: "sleep 5", cwd: process.cwd(), stdin: "", env: {}, timeout: 0.2 })
+    const result = await ShellHooksPlugin.run({
+      command: "sleep 5",
+      cwd: process.cwd(),
+      stdin: "",
+      env: {},
+      timeout: 0.2,
+    })
     expect(result.code).not.toBe(0)
     expect(result.stderr).toContain("timed out")
   })

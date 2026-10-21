@@ -48,7 +48,13 @@ describe("agent browser network log", () => {
       "GET 404 fetch http://x/api",
     )
     expect(
-      ChromeTools.formatRequest({ id: "2", method: "POST", url: "http://x/save", type: "XHR", error: "net::ERR_FAILED" }),
+      ChromeTools.formatRequest({
+        id: "2",
+        method: "POST",
+        url: "http://x/save",
+        type: "XHR",
+        error: "net::ERR_FAILED",
+      }),
     ).toBe("POST FAILED (net::ERR_FAILED) xhr http://x/save")
     expect(ChromeTools.formatRequest({ id: "3", method: "GET", url: "http://x/slow", type: "Script" })).toBe(
       "GET pending script http://x/slow",
@@ -58,7 +64,11 @@ describe("agent browser network log", () => {
 
 describe("chrome key events", () => {
   test("named keys and characters", () => {
-    expect(ChromeTools.keyEvent("Enter", "linux")).toMatchObject({ key: "Enter", windowsVirtualKeyCode: 13, text: "\r" })
+    expect(ChromeTools.keyEvent("Enter", "linux")).toMatchObject({
+      key: "Enter",
+      windowsVirtualKeyCode: 13,
+      text: "\r",
+    })
     expect(ChromeTools.keyEvent("a", "linux")).toEqual({
       key: "a",
       code: "KeyA",

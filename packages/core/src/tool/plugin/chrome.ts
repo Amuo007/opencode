@@ -405,7 +405,16 @@ const keys: Record<string, { key: string; code: string; keyCode: number; text?: 
   end: { key: "End", code: "End", keyCode: 35 },
 }
 
-const MODIFIERS: Record<string, number> = { alt: 1, option: 1, control: 2, ctrl: 2, meta: 4, cmd: 4, command: 4, shift: 8 }
+const MODIFIERS: Record<string, number> = {
+  alt: 1,
+  option: 1,
+  control: 2,
+  ctrl: 2,
+  meta: 4,
+  cmd: 4,
+  command: 4,
+  shift: 8,
+}
 // Headless Chrome on macOS performs editing shortcuts only when the command is named (as Puppeteer does).
 const MAC_COMMANDS: Record<string, string> = { a: "selectAll", c: "copy", x: "cut", v: "paste", z: "undo" }
 
@@ -424,7 +433,12 @@ export function keyEvent(name: string, platform: NodeJS.Platform = process.platf
   const known = keys[keyName.toLowerCase()]
   const key = known ?? {
     key: keyName,
-    code: single && /[a-z]/i.test(keyName) ? `Key${keyName.toUpperCase()}` : single && /\d/.test(keyName) ? `Digit${keyName}` : keyName,
+    code:
+      single && /[a-z]/i.test(keyName)
+        ? `Key${keyName.toUpperCase()}`
+        : single && /\d/.test(keyName)
+          ? `Digit${keyName}`
+          : keyName,
     keyCode: single && /[a-z\d]/i.test(keyName) ? keyName.toUpperCase().charCodeAt(0) : 0,
     text: single ? keyName : undefined,
   }

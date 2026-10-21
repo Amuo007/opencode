@@ -52,7 +52,10 @@ const sourceLines = (text: string) => text.split(/(?<=\n)/).filter((line) => lin
 
 const outputText = (output: Record<string, unknown>) => {
   const data = output.data as Record<string, unknown> | undefined
-  const text = output.text ?? data?.["text/plain"] ?? (output.ename ? `${String(output.ename)}: ${String(output.evalue)}` : undefined)
+  const text =
+    output.text ??
+    data?.["text/plain"] ??
+    (output.ename ? `${String(output.ename)}: ${String(output.evalue)}` : undefined)
   if (text !== undefined) return sourceText(text as string | string[])
   if (data && Object.keys(data).some((key) => key.startsWith("image/"))) return "[image output]"
   return ""
@@ -79,7 +82,9 @@ export function applyEdit(notebook: Notebook, input: EditInput, newID = () => ra
 
   if (input.mode === "insert") {
     const position =
-      input.cell_id !== undefined ? (located ?? cells.length - 1) + 1 : Math.min(Math.max(input.index ?? cells.length, 0), cells.length)
+      input.cell_id !== undefined
+        ? (located ?? cells.length - 1) + 1
+        : Math.min(Math.max(input.index ?? cells.length, 0), cells.length)
     const type = input.cell_type ?? "code"
     const cell: Cell = {
       cell_type: type,
@@ -92,7 +97,9 @@ export function applyEdit(notebook: Notebook, input: EditInput, newID = () => ra
   }
 
   if (located === undefined || located < 0 || located >= cells.length)
-    throw new Error(`Cell ${input.cell_id ?? input.index ?? "(none)"} does not exist; the notebook has ${cells.length} cells`)
+    throw new Error(
+      `Cell ${input.cell_id ?? input.index ?? "(none)"} does not exist; the notebook has ${cells.length} cells`,
+    )
 
   if (input.mode === "delete") return { notebook: { ...notebook, cells: cells.toSpliced(located, 1) }, index: located }
 
@@ -165,7 +172,9 @@ export const Plugin = {
                 output: { resource: target.resource, cells: notebook.cells.length },
                 content: `${target.resource}: ${notebook.cells.length} cells\n\n${describeNotebook(notebook)}`,
               }
-            }).pipe(Effect.mapError((error) => new ToolFailure({ message: `Unable to read notebook ${input.path}`, error }))),
+            }).pipe(
+              Effect.mapError((error) => new ToolFailure({ message: `Unable to read notebook ${input.path}`, error })),
+            ),
         })
 
         editor.add({
@@ -174,7 +183,12 @@ export const Plugin = {
           description:
             "Edit one cell of a Jupyter notebook: replace its source, insert a new cell, or delete it. Target cells by cell_id from notebook_read (or by 0-based index). Replacing a code cell clears its outputs.",
           input: EditInput,
-          output: Schema.Struct({ resource: Schema.String, mode: Schema.String, index: Schema.Number, cells: Schema.Number }),
+          output: Schema.Struct({
+            resource: Schema.String,
+            mode: Schema.String,
+            index: Schema.Number,
+            cells: Schema.Number,
+          }),
           execute: (input, context) =>
             Effect.gen(function* () {
               const target = yield* access.resolve({ path: input.path, kind: "file" })
@@ -200,12 +214,19 @@ export const Plugin = {
                   return edited
                 }),
               )
-              const output = { resource: target.resource, mode: input.mode, index: result.index, cells: result.notebook.cells.length }
+              const output = {
+                resource: target.resource,
+                mode: input.mode,
+                index: result.index,
+                cells: result.notebook.cells.length,
+              }
               return {
                 output,
                 content: `${input.mode === "delete" ? "Deleted" : input.mode === "insert" ? "Inserted" : "Replaced"} cell ${result.index} in ${target.resource} (${output.cells} cells now).`,
               }
-            }).pipe(Effect.mapError((error) => new ToolFailure({ message: `Unable to edit notebook ${input.path}`, error }))),
+            }).pipe(
+              Effect.mapError((error) => new ToolFailure({ message: `Unable to edit notebook ${input.path}`, error })),
+            ),
         })
       })
       .pipe(Effect.orDie)

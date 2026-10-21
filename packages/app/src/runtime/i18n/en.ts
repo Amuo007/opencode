@@ -730,7 +730,8 @@ export const dict = {
   "settings.server.preferences.websearch.off": "Off",
   "settings.server.preferences.websearch.key.button": "API key",
   "settings.server.preferences.websearch.key.title": "Web search API key",
-  "settings.server.preferences.websearch.key.description": "Paid search APIs are never blocked. Keys are stored with your other OpenCode credentials.",
+  "settings.server.preferences.websearch.key.description":
+    "Paid search APIs are never blocked. Keys are stored with your other OpenCode credentials.",
   "settings.server.preferences.websearch.key.label": "API key",
   "settings.server.preferences.websearch.key.save": "Save key",
   "settings.server.preferences.websearch.key.saved": "Saved {{provider}} key",
@@ -754,7 +755,8 @@ export const dict = {
   "settings.extensions.tab.tools": "Tools",
   "settings.extensions.memory.add.button": "Add memory",
   "settings.extensions.memory.add.title": "Add memory",
-  "settings.extensions.memory.add.description": "A fact the agent keeps for this project across sessions, listed in every request.",
+  "settings.extensions.memory.add.description":
+    "A fact the agent keeps for this project across sessions, listed in every request.",
   "settings.extensions.memory.add.save": "Save memory",
   "settings.extensions.memory.saved": "Saved memory {{name}}",
   "settings.extensions.memory.summary": "One-line summary",
@@ -767,7 +769,8 @@ export const dict = {
   "settings.extensions.memory.type.reference": "Reference",
   "settings.extensions.skill.new.button": "New skill",
   "settings.extensions.skill.new.title": "New skill",
-  "settings.extensions.skill.new.description": "Instructions the agent loads when a task matches. Saved to your global skills folder.",
+  "settings.extensions.skill.new.description":
+    "Instructions the agent loads when a task matches. Saved to your global skills folder.",
   "settings.extensions.skill.name": "Name",
   "settings.extensions.skill.when": "When to use it",
   "settings.extensions.skill.when.placeholder": "Use when preparing a release or bumping versions",
@@ -780,11 +783,13 @@ export const dict = {
   "settings.extensions.skill.created": "Saved skill {{name}}",
   "settings.extensions.skill.removed": "Removed skill {{name}}",
   "settings.extensions.skill.remove": "Remove {{name}}",
-  "settings.extensions.mcp.empty": "No MCP servers yet. Add one to give the agent new tools, for example a database, GitHub or Blender.",
+  "settings.extensions.mcp.empty":
+    "No MCP servers yet. Add one to give the agent new tools, for example a database, GitHub or Blender.",
   "settings.extensions.tools.title": "Agent tools",
   "settings.extensions.tools.hint": "Off removes them from the model; fewer tools means shorter prompts",
   "settings.extensions.tools.chrome": "Browser",
-  "settings.extensions.tools.chrome.description": "Headless Chrome the agent drives: open pages, click, type, screenshots",
+  "settings.extensions.tools.chrome.description":
+    "Headless Chrome the agent drives: open pages, click, type, screenshots",
   "settings.extensions.tools.websearch": "Web search",
   "settings.extensions.tools.websearch.description": "Search the internet",
   "settings.extensions.tools.webfetch": "Web fetch",
@@ -800,7 +805,8 @@ export const dict = {
   "settings.extensions.tools.notify": "Notifications",
   "settings.extensions.tools.notify.description": "Desktop notifications when a task needs you",
   "settings.extensions.tools.todowrite": "Task list",
-  "settings.extensions.tools.todowrite.description": "A checklist the agent keeps for multi-step work, shown above the composer",
+  "settings.extensions.tools.todowrite.description":
+    "A checklist the agent keeps for multi-step work, shown above the composer",
   "settings.extensions.memory.title": "Saved memories by project",
   "settings.extensions.memory.hint": "The agent saves these with memory_save",
   "settings.extensions.memory.empty": "No memories yet. Ask the agent to remember something, or use /memory.",
@@ -814,7 +820,8 @@ export const dict = {
   "settings.extensions.mcp.add.local": "Local command",
   "settings.extensions.mcp.add.remote": "Remote URL",
   "settings.extensions.mcp.add.command": "Command",
-  "settings.extensions.mcp.add.command.description": "The command that starts the server. Quote arguments that contain spaces.",
+  "settings.extensions.mcp.add.command.description":
+    "The command that starts the server. Quote arguments that contain spaces.",
   "settings.extensions.mcp.add.command.invalid": "Enter the command that starts the server.",
   "settings.extensions.mcp.add.environment": "Environment variables",
   "settings.extensions.mcp.add.environment.description": "One KEY=value per line (optional).",
@@ -825,11 +832,13 @@ export const dict = {
   "settings.extensions.mcp.add.save": "Add server",
   "settings.extensions.mcp.add.json": "Paste JSON",
   "settings.extensions.mcp.add.json.label": "Configuration",
-  "settings.extensions.mcp.add.json.description": "The snippet from the server's README, in Claude Desktop, Cursor or VS Code format. Adds every server in it; one server without a name uses the Name above.",
+  "settings.extensions.mcp.add.json.description":
+    "The snippet from the server's README, in Claude Desktop, Cursor or VS Code format. Adds every server in it; one server without a name uses the Name above.",
   "settings.extensions.mcp.add.json.empty": "Paste the server configuration.",
   "settings.extensions.mcp.add.json.json": "This is not valid JSON.",
   "settings.extensions.mcp.add.json.servers": "No servers found. Each server needs a command or an http(s) URL.",
-  "settings.extensions.mcp.add.json.name": "Enter a Name above, or use server names made of letters, numbers, dots, dashes or underscores.",
+  "settings.extensions.mcp.add.json.name":
+    "Enter a Name above, or use server names made of letters, numbers, dots, dashes or underscores.",
   "settings.extensions.mcp.add.saved": "Added {{name}}",
   "settings.extensions.mcp.remove": "Remove {{name}}",
   "settings.extensions.mcp.removed": "Removed {{name}}",
@@ -1080,7 +1089,8 @@ export const dict = {
   "settings.permissions.tool.subagent.title": "Subagent",
   "settings.permissions.tool.subagent.description": "Launch sub-agents",
   "settings.permissions.tool.chrome.title": "Browser",
-  "settings.permissions.tool.chrome.description": "Use the agent's headless Chrome: open pages, click, type and take screenshots",
+  "settings.permissions.tool.chrome.description":
+    "Use the agent's headless Chrome: open pages, click, type and take screenshots",
   "settings.permissions.tool.memory.title": "Memory",
   "settings.permissions.tool.memory.description": "Save or delete facts the agent keeps across sessions",
   "settings.permissions.tool.terminal.title": "Your terminals",

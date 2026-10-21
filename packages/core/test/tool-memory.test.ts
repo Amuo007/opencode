@@ -20,7 +20,9 @@ describe("MemoryTools", () => {
       "- [uses-bun](uses-bun.md) — Project uses Bun 1.4",
       "- [deploy-steps](deploy-steps.md) — How to deploy",
     ])
-    expect(MemoryTools.removeFromIndex(replaced, "uses-bun")).toBe("- [deploy-steps](deploy-steps.md) — How to deploy\n")
+    expect(MemoryTools.removeFromIndex(replaced, "uses-bun")).toBe(
+      "- [deploy-steps](deploy-steps.md) — How to deploy\n",
+    )
   })
 
   test("writes frontmatter", () => {
@@ -36,12 +38,19 @@ describe("MemoryTools", () => {
 
 describe("MemoryTools files", () => {
   test("parses frontmatter and plain files", () => {
-    expect(MemoryTools.parse("x", MemoryTools.format({ name: "a", description: "b", type: "user", content: "c" }))).toEqual({
+    expect(
+      MemoryTools.parse("x", MemoryTools.format({ name: "a", description: "b", type: "user", content: "c" })),
+    ).toEqual({
       name: "a",
       description: "b",
       type: "user",
       content: "c",
     })
-    expect(MemoryTools.parse("plain", "just text")).toEqual({ name: "plain", description: "", type: "", content: "just text" })
+    expect(MemoryTools.parse("plain", "just text")).toEqual({
+      name: "plain",
+      description: "",
+      type: "",
+      content: "just text",
+    })
   })
 })

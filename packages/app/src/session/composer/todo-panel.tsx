@@ -63,7 +63,8 @@ export function SessionTodoPanel(props: { todos: readonly Todo[]; latest: boolea
                     classList={{
                       "text-v2-text-text-base font-[530]": todo.status === "in_progress",
                       "text-v2-text-text-base": todo.status === "pending",
-                      "text-v2-text-text-muted line-through": todo.status === "completed" || todo.status === "cancelled",
+                      "text-v2-text-text-muted line-through":
+                        todo.status === "completed" || todo.status === "cancelled",
                     }}
                   >
                     {todo.content}

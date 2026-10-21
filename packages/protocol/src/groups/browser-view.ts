@@ -39,7 +39,8 @@ export const BrowserViewGroup = HttpApiGroup.make("server.browserView")
         OpenApi.annotations({
           identifier: "experimental.browserView.act",
           summary: "Act in the agent browser",
-          description: "Navigate, click, scroll, type or press a key in the location's agent browser, then return its view.",
+          description:
+            "Navigate, click, scroll, type or press a key in the location's agent browser, then return its view.",
         }),
       ),
   )

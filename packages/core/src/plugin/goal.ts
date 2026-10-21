@@ -45,7 +45,12 @@ export const Plugin = define({
               return
             }
             goals.set(input.sessionID, { condition, rounds: 0 })
-            yield* ctx.session.prompt({ ...input.prompt, sessionID: input.sessionID, text: kickoff(condition), delivery: input.delivery })
+            yield* ctx.session.prompt({
+              ...input.prompt,
+              sessionID: input.sessionID,
+              text: kickoff(condition),
+              delivery: input.delivery,
+            })
           }),
       }),
     )
@@ -58,7 +63,9 @@ export const Plugin = define({
           description: `Mark the active /goal as finished. Call it only when the goal is achieved and verified, or with achieved=false when it cannot be achieved.`,
           input: Schema.Struct({
             summary: Schema.String.annotate({ description: "What was done and the evidence it works" }),
-            achieved: Schema.optionalKey(Schema.Boolean).annotate({ description: "false if the goal cannot be achieved" }),
+            achieved: Schema.optionalKey(Schema.Boolean).annotate({
+              description: "false if the goal cannot be achieved",
+            }),
           }),
           output: Schema.Struct({ cleared: Schema.Boolean }),
           execute: (input, context) =>

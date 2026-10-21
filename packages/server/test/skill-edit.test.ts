@@ -9,8 +9,8 @@ describe("skill editing", () => {
   })
 
   test("writes frontmatter the skill loader reads", () => {
-    expect(skillFile({ name: "deploy", description: "Ship it: carefully\nnow", content: "\n1. Build\n2. Deploy\n" })).toBe(
-      '---\nname: deploy\ndescription: "Ship it: carefully now"\n---\n\n1. Build\n2. Deploy\n',
-    )
+    expect(
+      skillFile({ name: "deploy", description: "Ship it: carefully\nnow", content: "\n1. Build\n2. Deploy\n" }),
+    ).toBe('---\nname: deploy\ndescription: "Ship it: carefully now"\n---\n\n1. Build\n2. Deploy\n')
   })
 })

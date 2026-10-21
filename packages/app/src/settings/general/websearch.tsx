@@ -30,7 +30,9 @@ export function createWebSearchController(server: Accessor<ServerConnection.Any>
       ])
       const boundary = entries.findIndex((entry) => entry.type === "directory")
       const selection = (boundary === -1 ? entries : entries.slice(0, boundary))
-        .flatMap((entry) => (entry.type === "document" && entry.info.websearch !== undefined ? [entry.info.websearch] : []))
+        .flatMap((entry) =>
+          entry.type === "document" && entry.info.websearch !== undefined ? [entry.info.websearch] : [],
+        )
         .at(-1)
       const current = selection === false ? OFF : (selection?.provider ?? AUTOMATIC)
       return { providers: providers.data, current }

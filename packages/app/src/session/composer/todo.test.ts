@@ -13,13 +13,17 @@ const write = (id: string, todos: unknown, status: "completed" | "running" = "co
         type: "tool",
         id: `call_${id}`,
         name: "todowrite",
-        state: status === "completed" ? { status, input: { todos }, content: [{ type: "text", text: "" }] } : { status, input: { todos } },
+        state:
+          status === "completed"
+            ? { status, input: { todos }, content: [{ type: "text", text: "" }] }
+            : { status, input: { todos } },
         time: { created: 1 },
       },
     ],
   }) as unknown as SessionMessageInfo
 
-const user = (id: string) => ({ id, sessionID: "ses_1", type: "user", time: { created: 1 } }) as unknown as SessionMessageInfo
+const user = (id: string) =>
+  ({ id, sessionID: "ses_1", type: "user", time: { created: 1 } }) as unknown as SessionMessageInfo
 
 describe("sessionTodos", () => {
   test("uses the latest completed todowrite call", () => {

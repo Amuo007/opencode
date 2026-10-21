@@ -90,7 +90,9 @@ export const Plugin = {
               }
             }).pipe(
               Effect.mapError((error) =>
-                error instanceof ToolFailure ? error : new ToolFailure({ message: "Unable to present the plan", error }),
+                error instanceof ToolFailure
+                  ? error
+                  : new ToolFailure({ message: "Unable to present the plan", error }),
               ),
             ),
         }),

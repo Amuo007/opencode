@@ -25,7 +25,12 @@ describe("NotebookTools", () => {
   })
 
   test("replaces a cell and clears its outputs", () => {
-    const result = NotebookTools.applyEdit(notebook(), { path: "n.ipynb", mode: "replace", cell_id: "load", source: "y = 2\ny" })
+    const result = NotebookTools.applyEdit(notebook(), {
+      path: "n.ipynb",
+      mode: "replace",
+      cell_id: "load",
+      source: "y = 2\ny",
+    })
     expect(result.index).toBe(1)
     expect(result.notebook.cells[1]).toEqual({
       cell_type: "code",
@@ -54,7 +59,9 @@ describe("NotebookTools", () => {
   })
 
   test("deletes and reports missing cells", () => {
-    expect(NotebookTools.applyEdit(notebook(), { path: "n.ipynb", mode: "delete", index: 0 }).notebook.cells).toHaveLength(1)
+    expect(
+      NotebookTools.applyEdit(notebook(), { path: "n.ipynb", mode: "delete", index: 0 }).notebook.cells,
+    ).toHaveLength(1)
     expect(() => NotebookTools.applyEdit(notebook(), { path: "n.ipynb", mode: "delete", cell_id: "nope" })).toThrow(
       "No cell with id nope",
     )

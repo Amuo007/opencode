@@ -296,7 +296,8 @@ export const Plugin = {
               const run = Effect.gen(function* () {
                 const result = yield* shell.result(info)
                 // A running command removed from outside this tool was stopped by the user from the app.
-                if (!result.capture && result.info.status === "killed") return yield* Effect.fail(new Error(STOPPED_BY_USER))
+                if (!result.capture && result.info.status === "killed")
+                  return yield* Effect.fail(new Error(STOPPED_BY_USER))
                 if (!result.capture) return yield* new Shell.NotFoundError({ id: info.id })
                 const output = ShellResult.output(result)
                 return {

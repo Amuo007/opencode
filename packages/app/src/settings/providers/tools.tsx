@@ -8,7 +8,17 @@ import { showToast } from "@/shell/notifications/toast"
 
 // Tool groups by permission name. Switching one off adds a global deny rule for every resource, which removes its
 // tools from the model, so small local models get a shorter prompt.
-const GROUPS = ["chrome", "websearch", "webfetch", "memory", "terminal", "screenshot", "lsp", "notify", "todowrite"] as const
+const GROUPS = [
+  "chrome",
+  "websearch",
+  "webfetch",
+  "memory",
+  "terminal",
+  "screenshot",
+  "lsp",
+  "notify",
+  "todowrite",
+] as const
 
 type Rule = { action?: string; resource?: string; effect?: string }
 

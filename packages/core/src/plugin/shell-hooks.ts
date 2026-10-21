@@ -46,7 +46,13 @@ export function matches(matcher: string | undefined, tool: string) {
   }
 }
 
-export function run(input: { command: string; cwd: string; stdin: string; env: Record<string, string>; timeout: number }) {
+export function run(input: {
+  command: string
+  cwd: string
+  stdin: string
+  env: Record<string, string>
+  timeout: number
+}) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve) => {
     const child = spawn(input.command, {
       cwd: input.cwd,
@@ -127,12 +133,18 @@ export const Plugin = define({
     const feedback = (results: Array<{ hook: Hook; code: number | null; stderr: string; stdout: string }>) =>
       results
         .filter((result) => result.code === 2)
-        .map((result) => (result.stderr.trim() || result.stdout.trim() || `Hook "${result.hook.command}" exited with code 2`).slice(0, MAX_FEEDBACK))
+        .map((result) =>
+          (result.stderr.trim() || result.stdout.trim() || `Hook "${result.hook.command}" exited with code 2`).slice(
+            0,
+            MAX_FEEDBACK,
+          ),
+        )
 
     const warn = (results: Array<{ hook: Hook; code: number | null; stderr: string }>) =>
       Effect.forEach(
         results.filter((result) => result.code !== 0 && result.code !== 2),
-        (result) => Effect.logWarning("hook failed", { command: result.hook.command, code: result.code, stderr: result.stderr }),
+        (result) =>
+          Effect.logWarning("hook failed", { command: result.hook.command, code: result.code, stderr: result.stderr }),
         { discard: true },
       )
 
@@ -149,7 +161,8 @@ export const Plugin = define({
         const results = yield* fire("PreToolUse", event.tool, { sessionID: event.sessionID, input: event.input })
         yield* warn(results)
         const blocked = feedback(results)
-        if (blocked.length) return yield* Effect.fail(new Tool.Error({ message: `Blocked by hook: ${blocked.join("\n")}` }))
+        if (blocked.length)
+          return yield* Effect.fail(new Tool.Error({ message: `Blocked by hook: ${blocked.join("\n")}` }))
       }),
     )
 

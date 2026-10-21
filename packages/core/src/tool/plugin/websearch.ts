@@ -86,10 +86,13 @@ export const Plugin = {
                 source: { type: "tool", messageID: context.messageID, id: context.id },
               })
               const search = () =>
-                websearch.query({ query: scopedQuery(input) }, {
-                  sessionID: context.sessionID,
-                  onProvider: (provider) => context.progress({ provider: provider.id }),
-                })
+                websearch.query(
+                  { query: scopedQuery(input) },
+                  {
+                    sessionID: context.sessionID,
+                    onProvider: (provider) => context.progress({ provider: provider.id }),
+                  },
+                )
               // Web search works out of the box: the first search switches on automatic provider
               // selection (the same choice as "Allow" in the old consent form). Users can still pin a
               // provider or disable web search in config or settings.
