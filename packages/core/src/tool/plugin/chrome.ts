@@ -202,6 +202,7 @@ class Browser {
       page.send("Runtime.enable"),
       page.send("Log.enable"),
       page.send("Emulation.setDeviceMetricsOverride", { ...VIEWPORT, deviceScaleFactor: 1, mobile: false }),
+      page.send("Page.addScriptToEvaluateOnNewDocument", { source: sameTabScript }),
     ])
     page.on("Runtime.consoleAPICalled", (params) => {
       const args = (params.args as Array<Record<string, unknown>> | undefined) ?? []
@@ -258,6 +259,18 @@ class Browser {
     await rm(this.directory, { recursive: true, force: true }).catch(() => undefined)
   }
 }
+
+// The agent drives one tab, so links and window.open calls that would open another tab load in this one.
+export const sameTabScript = `(() => {
+  window.open = (url) => {
+    if (url) location.href = new URL(String(url), location.href).href
+    return window
+  }
+  document.addEventListener("click", (event) => {
+    const link = event.target instanceof Element ? event.target.closest("a[target]") : null
+    if (link && link.target !== "_self") link.target = "_self"
+  }, true)
+})()`
 
 async function waitForPort(directory: string, child: ChildProcess) {
   const file = path.join(directory, "DevToolsActivePort")
