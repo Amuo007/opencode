@@ -312,6 +312,8 @@ const targetScript = (target: { ref?: number; selector?: string; text?: string }
       || all.find((item) => (item.innerText || item.value || item.getAttribute('aria-label') || '').toLowerCase().includes(wanted))
   }
   if (!el) return null
+  document.querySelectorAll('[data-oc-target]').forEach((item) => item.removeAttribute('data-oc-target'))
+  el.setAttribute('data-oc-target', '1')
   el.scrollIntoView({ block: 'center', inline: 'center' })
   const rect = el.getBoundingClientRect()
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, tag: el.tagName.toLowerCase() }
@@ -602,6 +604,72 @@ export const Plugin = {
                 return location(page)
               })
               return { output, content: `Pressed ${input.key}. Page: ${output.url}` }
+            }),
+        })
+
+        editor.add({
+          name: "select",
+          options,
+          description:
+            "Choose an option in a <select> dropdown (by ref, selector or text of the select) using the option's visible label or value.",
+          input: Schema.Struct({
+            ...Target,
+            option: Schema.String.annotate({ description: "Visible label or value of the option to choose" }),
+          }),
+          output: PageOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const output = yield* run("Could not choose the option", async (page) => {
+                await pointAt(page, input)
+                const chosen = await page.evaluate(`(() => {
+                  const el = document.querySelector('[data-oc-target]')
+                  const select = el && el.tagName === 'SELECT' ? el : el && el.querySelector ? el.querySelector('select') : null
+                  if (!select) return 'not-a-select'
+                  const wanted = ${JSON.stringify(input.option)}.toLowerCase()
+                  const option = [...select.options].find((item) => item.label.toLowerCase() === wanted || item.value.toLowerCase() === wanted)
+                    || [...select.options].find((item) => item.label.toLowerCase().includes(wanted))
+                  if (!option) return 'no-option'
+                  select.value = option.value
+                  select.dispatchEvent(new Event('input', { bubbles: true }))
+                  select.dispatchEvent(new Event('change', { bubbles: true }))
+                  return 'ok'
+                })()`)
+                if (chosen === "not-a-select") throw new Error("The target is not a <select> element")
+                if (chosen === "no-option") throw new Error(`No option matches "${input.option}"`)
+                await settle()
+                return location(page)
+              })
+              return { output, content: `Selected "${input.option}". Page: ${output.url}` }
+            }),
+        })
+
+        editor.add({
+          name: "wait",
+          options,
+          description:
+            "Wait until text appears on the page or a CSS selector matches (for content that loads after an action). Times out after the given seconds (default 10, max 60).",
+          input: Schema.Struct({
+            text: Schema.optionalKey(Schema.String).annotate({ description: "Text to wait for" }),
+            selector: Schema.optionalKey(Schema.String).annotate({ description: "CSS selector to wait for" }),
+            seconds: Schema.optionalKey(Schema.Number).annotate({ description: "Maximum wait in seconds" }),
+          }),
+          output: TextOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const found = yield* run("Could not wait", async (page) => {
+                const deadline = Date.now() + Math.min(Math.max(input.seconds ?? 10, 0.5), 60) * 1000
+                const check = `(() => ${JSON.stringify(input.selector ?? "")} ? !!document.querySelector(${JSON.stringify(input.selector ?? "")}) : (document.body ? document.body.innerText : '').includes(${JSON.stringify(input.text ?? "")}))()`
+                while (Date.now() < deadline) {
+                  if (await page.evaluate(check).catch(() => false)) return true
+                  await new Promise((resolve) => setTimeout(resolve, 250))
+                }
+                return false
+              })
+              const what = input.selector ? `selector ${input.selector}` : `text "${input.text ?? ""}"`
+              const output = found ? `Found ${what}.` : `Timed out waiting for ${what}.`
+              return { output: { output }, content: output }
             }),
         })
 

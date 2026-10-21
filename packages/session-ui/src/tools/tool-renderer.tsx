@@ -1720,11 +1720,26 @@ ToolRegistry.register({
 
 const textValue = (value: unknown) => (typeof value === "string" && value ? value : undefined)
 
-const chromeActions = ["open", "snapshot", "screenshot", "click", "type", "press", "scroll", "eval", "console", "close"] as const
+const chromeActions = [
+  "open",
+  "snapshot",
+  "screenshot",
+  "click",
+  "type",
+  "press",
+  "select",
+  "wait",
+  "scroll",
+  "eval",
+  "console",
+  "close",
+] as const
 
 function chromeSubtitle(action: string, input: Record<string, unknown>) {
   if (action === "open") return textValue(input.url)
   if (action === "press") return textValue(input.key)
+  if (action === "select") return textValue(input.option)
+  if (action === "wait") return textValue(input.text) ?? textValue(input.selector)
   if (action === "scroll") return textValue(input.direction)
   if (action === "eval") return textValue(input.expression)?.slice(0, 80)
   if (action !== "click" && action !== "type") return undefined
