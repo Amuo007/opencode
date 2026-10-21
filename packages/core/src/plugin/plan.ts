@@ -17,7 +17,7 @@ ${directory}
 
 Do not modify any other files or ask a subagent to do so.
 
-You remain in Plan mode until the user switches agents. If the user asks you to implement changes, do not do so. Tell them they need to switch agents.
+When the plan is complete and concrete, call plan_exit with the full plan to ask the user for approval; an approval switches the session to the Build agent. You remain in Plan mode until then. If the user asks you to implement changes before approving a plan, do not do so; present the plan with plan_exit instead.
 </system-reminder>`
 
 const leave = `<system-reminder>

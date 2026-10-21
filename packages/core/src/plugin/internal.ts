@@ -69,6 +69,7 @@ import { Skill } from "../skill.js"
 import { SkillDiscovery } from "../skill/discovery.js"
 import { Watcher } from "../filesystem/watcher.js"
 import { PatchTool } from "../tool/plugin/patch.js"
+import { PlanExitTool } from "../tool/plugin/plan-exit.js"
 import { ChromeTools } from "../tool/plugin/chrome.js"
 import { EditTool } from "../tool/plugin/edit.js"
 import { GlobTool } from "../tool/plugin/glob.js"
@@ -247,6 +248,7 @@ const pre = [
   McpResourceTools.Plugin,
   MemoryTools.Plugin,
   NotebookTools.Plugin,
+  PlanExitTool.Plugin,
   QuestionTool.Plugin,
   ReadTool.Plugin,
   ShellTool.Plugin,

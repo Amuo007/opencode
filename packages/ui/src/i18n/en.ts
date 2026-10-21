@@ -209,6 +209,7 @@ const source = {
   "ui.tool.memory.read": "Read memory",
   "ui.tool.memory.delete": "Delete memory",
   "ui.tool.notebook": "Notebook",
+  "ui.tool.planExit": "Plan for approval",
   "ui.tool.notebook.read": "Read notebook",
   "ui.tool.notebook.edit": "Edit notebook",
   "ui.tool.webfetch": "Webfetch",

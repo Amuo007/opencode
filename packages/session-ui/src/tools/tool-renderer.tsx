@@ -367,6 +367,7 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
       if (tool.name.startsWith("chrome_")) return i18n.t("ui.tool.browser")
       if (tool.name.startsWith("memory_")) return i18n.t("ui.tool.memory")
       if (tool.name.startsWith("notebook_")) return i18n.t("ui.tool.notebook")
+      if (tool.name === "plan_exit") return i18n.t("ui.tool.planExit")
       return tool.name
   }
 }
@@ -1798,6 +1799,26 @@ const NotebookTool: ToolComponent = (props) => {
     />
   )
 }
+
+ToolRegistry.register({
+  name: "plan_exit",
+  render(props) {
+    const i18n = useI18n()
+    const heading = () =>
+      (textValue(props.input.plan) ?? "")
+        .split("\n")
+        .find((line) => line.trim())
+        ?.replace(/^#+\s*/, "")
+    return (
+      <BasicTool
+        {...props}
+        icon="task"
+        hideDetails
+        trigger={{ title: i18n.t("ui.tool.planExit"), subtitle: heading() }}
+      />
+    )
+  },
+})
 
 ToolRegistry.register({ name: "notebook_read", render: NotebookTool })
 ToolRegistry.register({ name: "notebook_edit", render: NotebookTool })

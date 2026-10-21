@@ -341,6 +341,11 @@ const namespacedTools = [
 const detailKeys = ["url", "path", "name", "key", "query", "text", "selector", "direction", "expression"]
 
 function fallbackInline(ctx: ToolFrame): ToolInline {
+  if (ctx.name === "plan_exit") {
+    const plan = typeof ctx.input.plan === "string" ? ctx.input.plan : ""
+    const heading = plan.split("\n").find((line) => line.trim())?.replace(/^#+\s*/, "")
+    return { icon: "☑", title: `Plan ready for approval${heading ? `: ${heading.slice(0, 100)}` : ""}` }
+  }
   const namespaced = namespacedTools.find((item) => ctx.name.startsWith(item.prefix))
   if (namespaced) {
     const detail = detailKeys.map((key) => ctx.input[key]).find((value) => typeof value === "string" && value)
