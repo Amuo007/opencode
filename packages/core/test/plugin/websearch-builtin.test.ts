@@ -68,3 +68,20 @@ describe("WebSearchBuiltin", () => {
     expect(WebSearchBuiltin.text("<b>A</b> &amp; &#x42; &#67;&nbsp;d")).toBe("A & B C d")
   })
 })
+
+describe("websearch domain filters", () => {
+  test("scopes queries and filters results by domain", async () => {
+    const { WebSearchTool } = await import("@opencode/core/tool/plugin/websearch")
+    const input = { query: "bun test", allowed_domains: ["bun.sh"], blocked_domains: ["spam.bun.sh"] }
+    expect(WebSearchTool.scopedQuery(input)).toBe("bun test site:bun.sh")
+    expect(WebSearchTool.scopedQuery({ query: "plain" })).toBe("plain")
+    expect(
+      WebSearchTool.filterResults(input, [
+        { url: "https://bun.sh/docs" },
+        { url: "https://www.bun.sh/x" },
+        { url: "https://spam.bun.sh/y" },
+        { url: "https://example.com" },
+      ]).map((item) => item.url),
+    ).toEqual(["https://bun.sh/docs", "https://www.bun.sh/x"])
+  })
+})

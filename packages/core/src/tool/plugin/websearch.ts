@@ -22,7 +22,39 @@ The current year is ${new Date().getFullYear()}. Use this year when searching fo
 
 export const Input = Schema.Struct({
   query: Schema.String.annotate({ description: "Websearch query" }),
+  allowed_domains: Schema.optionalKey(Schema.Array(Schema.String)).annotate({
+    description: "Only return results from these domains (e.g. docs.python.org)",
+  }),
+  blocked_domains: Schema.optionalKey(Schema.Array(Schema.String)).annotate({
+    description: "Never return results from these domains",
+  }),
 })
+
+const host = (url: string) => {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "")
+  } catch {
+    return ""
+  }
+}
+const onDomain = (url: string, domains: readonly string[]) =>
+  domains.some((domain) => {
+    const wanted = domain.toLowerCase().replace(/^www\./, "")
+    return host(url) === wanted || host(url).endsWith(`.${wanted}`)
+  })
+
+/** Adds site: hints for allowed domains so providers search them, then filters results either way. */
+export const scopedQuery = (input: typeof Input.Type) =>
+  input.allowed_domains?.length
+    ? `${input.query} ${input.allowed_domains.map((domain) => `site:${domain}`).join(" OR ")}`
+    : input.query
+
+export const filterResults = <A extends { url: string }>(input: typeof Input.Type, results: readonly A[]) =>
+  results.filter(
+    (result) =>
+      (!input.allowed_domains?.length || onDomain(result.url, input.allowed_domains)) &&
+      !(input.blocked_domains?.length && onDomain(result.url, input.blocked_domains)),
+  )
 
 const Output = Schema.Struct({
   provider: WebSearch.ID,
@@ -54,7 +86,7 @@ export const Plugin = {
                 source: { type: "tool", messageID: context.messageID, id: context.id },
               })
               const search = () =>
-                websearch.query(input, {
+                websearch.query({ query: scopedQuery(input) }, {
                   sessionID: context.sessionID,
                   onProvider: (provider) => context.progress({ provider: provider.id }),
                 })
@@ -77,7 +109,7 @@ export const Plugin = {
               )
               const output = {
                 provider: result.providerID,
-                results: result.results,
+                results: filterResults(input, result.results),
               }
               const content = output.results.length
                 ? output.results
