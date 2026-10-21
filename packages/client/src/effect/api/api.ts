@@ -2378,6 +2378,7 @@ export type ConfigUpdateInput = {
   readonly websearch?: false | { readonly provider: "random" | WebSearch.ID } | null | undefined
   readonly provider?: { readonly [x: string]: Config.CustomProvider | null } | undefined
   readonly mcp?: { readonly [x: string]: Mcp.LocalConfig | Mcp.RemoteConfig | null } | undefined
+  readonly tools?: { readonly [x: string]: boolean } | undefined
 }
 export type ConfigUpdateOutput = void
 export type ConfigUpdateOperation<E = never> = (input?: ConfigUpdateInput) => Effect.Effect<ConfigUpdateOutput, E>

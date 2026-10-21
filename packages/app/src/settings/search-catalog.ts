@@ -11,7 +11,7 @@ type Entry<Tab> = {
   keywords?: string
   description?: Label
   section?: Label
-  subtab?: "mcps" | "plugins" | "skills" | "memory" | "lsps"
+  subtab?: "mcps" | "plugins" | "skills" | "memory" | "tools" | "lsps"
   available?: "desktop" | "browser" | "mobile"
 }
 
@@ -168,6 +168,12 @@ export const serverSettings: Entry<SettingsServerTab>[] = [
   },
   { tab: "extensions", subtab: "plugins", label: "settings.extensions.tab.plugins" },
   { tab: "extensions", subtab: "skills", label: "settings.extensions.tab.skills" },
+  {
+    tab: "extensions",
+    subtab: "tools",
+    label: "settings.extensions.tab.tools",
+    keywords: "browser chrome terminal screenshot memory web search lsp disable",
+  },
   {
     tab: "general",
     label: "settings.general.row.shell.title",

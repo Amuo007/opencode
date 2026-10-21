@@ -1687,6 +1687,7 @@ const EndpointConfigUpdate = (raw: RawClient["server.config"]) => (input?: Confi
         websearch: input?.["websearch"],
         provider: input?.["provider"],
         mcp: input?.["mcp"],
+        tools: input?.["tools"],
       },
     }).pipe(Effect.mapError(mapClientError)),
   )

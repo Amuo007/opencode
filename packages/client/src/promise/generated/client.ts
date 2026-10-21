@@ -2340,6 +2340,7 @@ export function make(options: ClientOptions) {
               websearch: input?.["websearch"],
               provider: input?.["provider"],
               mcp: input?.["mcp"],
+              tools: input?.["tools"],
             },
             successStatus: 204,
             declaredStatuses: [400, 401, 404],

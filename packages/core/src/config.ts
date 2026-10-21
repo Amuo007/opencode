@@ -389,30 +389,35 @@ export const layer = (options?: Options) =>
             (yield* Effect.filter(candidates, fs.isFile)).at(-1) ?? path.join(directory, "opencode.jsonc")
           const text = (yield* fs.readFileStringSafe(filepath)) ?? "{}\n"
           const edits: Array<[string[], unknown]> = [
+            ...toolRules(text, patch.tools),
             ...(patch.shell === undefined ? [] : [[["shell"], patch.shell ?? undefined] as [string[], unknown]]),
             ...(patch.websearch === undefined
               ? []
               : [
                   [
                     ["websearch"],
-                    patch.websearch === null ? undefined : Schema.encodeSync(ConfigWebSearch.Selection)(patch.websearch),
+                    patch.websearch === null
+                      ? undefined
+                      : Schema.encodeSync(ConfigWebSearch.Selection)(patch.websearch),
                   ] as [string[], unknown],
                 ]),
-            ...Object.entries(patch.mcp ?? {}).flatMap(([name, server]): Array<[string[], unknown]> =>
-              server === null
-                ? [
-                    [["mcp", "servers", name], undefined],
-                    [["mcp", name], undefined],
-                  ]
-                : [[["mcp", "servers", name], Schema.encodeSync(ConfigMCP.Server)(server)]],
+            ...Object.entries(patch.mcp ?? {}).flatMap(
+              ([name, server]): Array<[string[], unknown]> =>
+                server === null
+                  ? [
+                      [["mcp", "servers", name], undefined],
+                      [["mcp", name], undefined],
+                    ]
+                  : [[["mcp", "servers", name], Schema.encodeSync(ConfigMCP.Server)(server)]],
             ),
-            ...Object.entries(patch.provider ?? {}).flatMap(([id, provider]): Array<[string[], unknown]> =>
-              provider === null
-                ? [
-                    [["provider", id], undefined],
-                    [["providers", id], undefined],
-                  ]
-                : [[["provider", id], provider]],
+            ...Object.entries(patch.provider ?? {}).flatMap(
+              ([id, provider]): Array<[string[], unknown]> =>
+                provider === null
+                  ? [
+                      [["provider", id], undefined],
+                      [["providers", id], undefined],
+                    ]
+                  : [[["provider", id], provider]],
             ),
           ]
           const updated = yield* Effect.try({
@@ -420,7 +425,10 @@ export const layer = (options?: Options) =>
               edits.reduce(
                 (current, [path, value]) =>
                   // Removing a key that is absent is a no-op edit list, so removals stay idempotent.
-                  applyEdits(current, modify(current, path, value, { formattingOptions: { tabSize: 2, insertSpaces: true } })),
+                  applyEdits(
+                    current,
+                    modify(current, path, value, { formattingOptions: { tabSize: 2, insertSpaces: true } }),
+                  ),
                 text,
               ),
             catch: (cause) => new FSUtil.FileSystemError({ method: "config.update", cause }),
@@ -464,3 +472,23 @@ export function configured(options?: Options) {
 }
 
 export const node = configured()
+
+type Rule = { action?: unknown; resource?: unknown; effect?: unknown }
+
+/** The global permissions edit for switching tool groups on or off: a deny rule for every resource per group. */
+export function toolRules(
+  text: string,
+  tools: Readonly<Record<string, boolean>> | undefined,
+): Array<[string[], unknown]> {
+  if (!tools || Object.keys(tools).length === 0) return []
+  const parsed = parse(text) as { permissions?: unknown } | undefined
+  const current = Array.isArray(parsed?.permissions) ? (parsed.permissions as Rule[]) : []
+  const kept = current.filter(
+    (rule) =>
+      !(typeof rule?.action === "string" && rule.action in tools && rule.resource === "*" && rule.effect === "deny"),
+  )
+  const denied = Object.entries(tools).flatMap(([action, on]) =>
+    on ? [] : [{ action, resource: "*", effect: "deny" }],
+  )
+  return [[["permissions"], [...kept, ...denied]]]
+}

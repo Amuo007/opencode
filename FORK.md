@@ -88,6 +88,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Dark by default**: the app starts in the dark theme; pick System or Light in Settings → Appearance.
 - **Agent browser panel** (side panel *+* menu → *Agent browser*, or `/browser`): a live view of the headless Chrome the agent drives with its `chrome_*` tools, refreshed every second. Type a URL or `localhost:3000`, click, scroll, type and paste into the page; the agent sees the same page, so you can set something up and ask it to continue. It opens by itself when the agent starts using its browser. API: `GET`/`POST /api/experimental/browser`.
 - **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
+- **Settings → Extensions → Tools**: switch the agent's tool groups on or off (browser, web search, web fetch, memory, your terminals, screen capture, code intelligence, notifications).
 - **Settings → Extensions → Memory**: every project's saved memories with type, description and content, and a delete button.
 - **Settings → Providers → Custom OpenAI-compatible provider**: now saves (base URL, API key, headers, models), so local servers can be added from the UI.
 - **Settings → Server → Web search**: choose Automatic, a specific provider (Built-in, Brave, Exa, Tavily, ...) or Off. The **API key** button saves, replaces or removes a key for Brave, Tavily, Exa, Firecrawl, Parallel or TinyFish (paid APIs are not blocked like scraping). From a terminal: `opencode auth login brave`, or set `BRAVE_API_KEY`.
@@ -96,8 +97,9 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 
 ## Notes
 
-- Fewer tools means a shorter prompt on every request, which helps small local models. To switch a group off,
-  deny its permission for every resource in `opencode.json`, and the tools leave the model's list:
+- Fewer tools means a shorter prompt on every request, which helps small local models. Switch tool groups off in
+  **Settings → Extensions → Tools**, or deny a permission for every resource in `opencode.json` (the tools leave
+  the model's list):
 
   ```json
   { "permissions": [{ "action": "chrome", "resource": "*", "effect": "deny" }] }

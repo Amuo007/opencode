@@ -573,7 +573,7 @@ function ProjectSettings(props: { server: ServerConnection.Any; project: LocalPr
             <ProjectSettingsExtensions
               subtab={(() => {
                 const value = surface.view().subtab
-                return value === "memory" ? undefined : value
+                return value === "memory" || value === "tools" ? undefined : value
               })()}
               onSubtab={(value) => surface.subtab(value)}
             />

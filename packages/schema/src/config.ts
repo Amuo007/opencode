@@ -137,6 +137,10 @@ export const Patch = Schema.Struct({
   mcp: Schema.Record(Schema.String, Schema.NullOr(ConfigMCP.Server)).pipe(optional).annotate({
     description: "MCP servers to save by name in the global configuration; null removes the server",
   }),
+  tools: Schema.Record(Schema.String, Schema.Boolean).pipe(optional).annotate({
+    description:
+      "Tool groups by permission name (e.g. chrome, memory) to switch on or off; off adds a global deny rule for every resource, which removes the tools from the model",
+  }),
 }).annotate({ identifier: "Config.Patch" })
 export interface Patch extends Schema.Schema.Type<typeof Patch> {}
 
