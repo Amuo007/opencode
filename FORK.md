@@ -96,5 +96,14 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 
 ## Notes
 
+- Fewer tools means a shorter prompt on every request, which helps small local models. To switch a group off,
+  deny its permission for every resource in `opencode.json`, and the tools leave the model's list:
+
+  ```json
+  { "permissions": [{ "action": "chrome", "resource": "*", "effect": "deny" }] }
+  ```
+
+  Names: `chrome` (browser tools), `memory`, `terminal`, `screenshot`, `lsp`, `notify`, `websearch`, `webfetch`.
+
 - `bun run lint` needs Node 22+ (oxlint loads TypeScript plugins); on older Node use `bun run typecheck`.
 - Upstream: https://github.com/anomalyco/opencode

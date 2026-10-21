@@ -75,7 +75,8 @@ export const Plugin = {
           name: namespace,
           description: "The user's terminals in the app's Terminal panel.",
         })
-        const options = { namespace, codemode: false } as const
+        // Both tools share the "terminal" permission name, so one deny rule removes them together.
+        const options = { namespace, permission: namespace, codemode: false } as const
 
         editor.add({
           name: "read",
@@ -113,7 +114,7 @@ export const Plugin = {
 
         editor.add({
           name: "run",
-          options: { ...options, permission: namespace },
+          options,
           description:
             "Type a command into the user's terminal in the app's Terminal panel and press Enter, then return the output that appears within `wait` seconds. Only use it when the user asks to run something in their terminal or to answer a program already running there; run your own commands with the shell tool instead.",
           input: Schema.Struct({
