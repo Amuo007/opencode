@@ -55,3 +55,40 @@ describe("agent browser network log", () => {
     )
   })
 })
+
+describe("chrome key events", () => {
+  test("named keys and characters", () => {
+    expect(ChromeTools.keyEvent("Enter", "linux")).toMatchObject({ key: "Enter", windowsVirtualKeyCode: 13, text: "\r" })
+    expect(ChromeTools.keyEvent("a", "linux")).toEqual({
+      key: "a",
+      code: "KeyA",
+      windowsVirtualKeyCode: 65,
+      nativeVirtualKeyCode: 65,
+      modifiers: 0,
+      text: "a",
+    })
+    expect(ChromeTools.keyEvent("+", "linux")).toMatchObject({ key: "+", modifiers: 0, text: "+" })
+  })
+
+  test("combinations set modifiers and type no text", () => {
+    expect(ChromeTools.keyEvent("Control+A", "linux")).toEqual({
+      key: "A",
+      code: "KeyA",
+      windowsVirtualKeyCode: 65,
+      nativeVirtualKeyCode: 65,
+      modifiers: 2,
+    })
+    expect(ChromeTools.keyEvent("Shift+Tab", "linux")).toMatchObject({ key: "Tab", modifiers: 8 })
+    expect(ChromeTools.keyEvent("Shift+A", "linux")).toMatchObject({ modifiers: 8, text: "A" })
+    expect(ChromeTools.keyEvent("Control++", "linux")).toMatchObject({ key: "+", modifiers: 2 })
+    expect(ChromeTools.keyEvent("Hello+World", "linux")).toMatchObject({ key: "Hello+World", modifiers: 0 })
+  })
+
+  test("editing shortcuts name the command on macOS", () => {
+    expect(ChromeTools.keyEvent("Control+a", "darwin")).toMatchObject({ modifiers: 4, commands: ["selectAll"] })
+    expect(ChromeTools.keyEvent("Meta+Shift+Z", "darwin")).toMatchObject({ modifiers: 12, commands: ["redo"] })
+    expect(ChromeTools.keyEvent("Meta+z", "darwin")).toMatchObject({ commands: ["undo"] })
+    expect(ChromeTools.keyEvent("Meta+ArrowLeft", "darwin")).not.toHaveProperty("commands")
+    expect(ChromeTools.keyEvent("Control+a", "linux")).not.toHaveProperty("commands")
+  })
+})

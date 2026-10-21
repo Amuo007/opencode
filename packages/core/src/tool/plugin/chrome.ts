@@ -405,6 +405,47 @@ const keys: Record<string, { key: string; code: string; keyCode: number; text?: 
   end: { key: "End", code: "End", keyCode: 35 },
 }
 
+const MODIFIERS: Record<string, number> = { alt: 1, option: 1, control: 2, ctrl: 2, meta: 4, cmd: 4, command: 4, shift: 8 }
+// Headless Chrome on macOS performs editing shortcuts only when the command is named (as Puppeteer does).
+const MAC_COMMANDS: Record<string, string> = { a: "selectAll", c: "copy", x: "cut", v: "paste", z: "undo" }
+
+/**
+ * Chrome DevTools key event fields for a key name: "Enter", "a", or a combination such as "Control+A" or
+ * "Meta+Shift+Z". On macOS, Control or Meta with A, C, X, V or Z runs the matching editing command, so a model
+ * that sends Control+A selects everything whatever system the browser runs on.
+ */
+export function keyEvent(name: string, platform: NodeJS.Platform = process.platform) {
+  const match = /^((?:[A-Za-z]+\+)+)(.+)$/.exec(name)
+  const prefix = match?.[1].slice(0, -1).toLowerCase().split("+") ?? []
+  const combo = match !== null && prefix.every((part) => part in MODIFIERS)
+  const keyName = combo ? match[2] : name
+  let modifiers = combo ? prefix.reduce((sum, part) => sum | MODIFIERS[part], 0) : 0
+  const single = keyName.length === 1
+  const known = keys[keyName.toLowerCase()]
+  const key = known ?? {
+    key: keyName,
+    code: single && /[a-z]/i.test(keyName) ? `Key${keyName.toUpperCase()}` : single && /\d/.test(keyName) ? `Digit${keyName}` : keyName,
+    keyCode: single && /[a-z\d]/i.test(keyName) ? keyName.toUpperCase().charCodeAt(0) : 0,
+    text: single ? keyName : undefined,
+  }
+  const command =
+    platform === "darwin" && modifiers & (MODIFIERS.control | MODIFIERS.meta) && single
+      ? MAC_COMMANDS[keyName.toLowerCase()]
+      : undefined
+  if (command) modifiers = (modifiers & ~MODIFIERS.control) | MODIFIERS.meta
+  // Control, Alt or Meta turn a character into a shortcut, so it types nothing.
+  const text = modifiers & ~MODIFIERS.shift ? undefined : key.text
+  return {
+    key: key.key,
+    code: key.code,
+    windowsVirtualKeyCode: key.keyCode,
+    nativeVirtualKeyCode: key.keyCode,
+    modifiers,
+    ...(text ? { text } : {}),
+    ...(command ? { commands: [command === "undo" && modifiers & MODIFIERS.shift ? "redo" : command] } : {}),
+  }
+}
+
 // Small models often send numbers as strings, so numeric inputs accept both.
 const Loose = Schema.Union([Schema.Number, Schema.NumberFromString])
 
@@ -553,22 +594,12 @@ export const Plugin = {
       })
 
     const press = async (page: Browser, name: string) => {
-      const key = keys[name.toLowerCase()] ?? {
-        key: name,
-        code: name,
-        keyCode: 0,
-        text: name.length === 1 ? name : undefined,
-      }
-      const base = {
-        key: key.key,
-        code: key.code,
-        windowsVirtualKeyCode: key.keyCode,
-        nativeVirtualKeyCode: key.keyCode,
-      }
+      const { text, commands, ...base } = keyEvent(name)
       await page.page.send("Input.dispatchKeyEvent", {
-        type: key.text ? "keyDown" : "rawKeyDown",
+        type: text ? "keyDown" : "rawKeyDown",
         ...base,
-        ...(key.text ? { text: key.text } : {}),
+        ...(text ? { text } : {}),
+        ...(commands ? { commands } : {}),
       })
       await page.page.send("Input.dispatchKeyEvent", { type: "keyUp", ...base })
     }
@@ -947,7 +978,7 @@ export const Plugin = {
           name: "press",
           options,
           description:
-            "Press a key in the page: Enter, Tab, Escape, Backspace, Delete, Space, ArrowUp/Down/Left/Right, PageUp, PageDown, Home, End, or a single character.",
+            "Press a key in the page: Enter, Tab, Escape, Backspace, Delete, Space, ArrowUp/Down/Left/Right, PageUp, PageDown, Home, End, or a single character. Combine with modifiers using +, e.g. Control+A to select all, Shift+Tab, Control+Z.",
           input: Schema.Struct({ key: Schema.String.annotate({ description: "Key name" }) }),
           output: PageOutput,
           execute: (input, context) =>

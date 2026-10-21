@@ -160,6 +160,13 @@ export default function AgentBrowserPanel(props: {
   }
 
   const onKey = (event: KeyboardEvent) => {
+    // Select all, undo and redo reach the page; paste arrives as a paste event, other shortcuts stay with the app.
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && ["a", "z", "y"].includes(event.key.toLowerCase())) {
+      event.preventDefault()
+      const modifier = event.metaKey ? "Meta" : "Control"
+      void act({ type: "key", key: `${modifier}+${event.shiftKey ? "Shift+" : ""}${event.key.toLowerCase()}` })
+      return
+    }
     if (event.metaKey || event.ctrlKey || event.altKey) return
     if (KEYS.has(event.key)) {
       event.preventDefault()
