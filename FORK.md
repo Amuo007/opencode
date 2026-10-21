@@ -132,7 +132,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
   your own browser.
 - Background commands end when the server stops. The background service (used by `opencode`, `pair -o` and the
   web app it serves) tells each session afterwards; a plain `opencode serve` does not, so its session header can
-  keep showing *1 running* for a command that is gone.
+  keep showing *1 running* for a command that is gone. Stop it from that menu (×) to clear it.
 
 ## Notes
 
