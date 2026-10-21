@@ -336,8 +336,9 @@ function displayPath(p: ToolProps, input?: string, opts: { home?: boolean } = {}
 const namespacedTools = [
   { prefix: "chrome_", label: "Browser", icon: "◎" },
   { prefix: "memory_", label: "Memory", icon: "✎" },
+  { prefix: "notebook_", label: "Notebook", icon: "▤" },
 ]
-const detailKeys = ["url", "name", "key", "query", "text", "selector", "direction", "expression"]
+const detailKeys = ["url", "path", "name", "key", "query", "text", "selector", "direction", "expression"]
 
 function fallbackInline(ctx: ToolFrame): ToolInline {
   const namespaced = namespacedTools.find((item) => ctx.name.startsWith(item.prefix))

@@ -366,6 +366,7 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
     default:
       if (tool.name.startsWith("chrome_")) return i18n.t("ui.tool.browser")
       if (tool.name.startsWith("memory_")) return i18n.t("ui.tool.memory")
+      if (tool.name.startsWith("notebook_")) return i18n.t("ui.tool.notebook")
       return tool.name
   }
 }
@@ -1780,6 +1781,26 @@ const MemoryTool: ToolComponent = (props) => {
 ;(["save", "read", "delete"] as const).forEach((action) =>
   ToolRegistry.register({ name: `memory_${action}`, render: MemoryTool }),
 )
+
+const NotebookTool: ToolComponent = (props) => {
+  const i18n = useI18n()
+  const mode = () => textValue(props.input.mode)
+  return (
+    <BasicTool
+      {...props}
+      icon="code-lines"
+      hideDetails
+      trigger={{
+        title: i18n.t(props.tool === "notebook_read" ? "ui.tool.notebook.read" : "ui.tool.notebook.edit"),
+        subtitle: getFilename(textValue(props.input.path) ?? ""),
+        args: mode() ? [mode() ?? ""] : [],
+      }}
+    />
+  )
+}
+
+ToolRegistry.register({ name: "notebook_read", render: NotebookTool })
+ToolRegistry.register({ name: "notebook_edit", render: NotebookTool })
 
 ToolRegistry.register({
   name: "websearch",
