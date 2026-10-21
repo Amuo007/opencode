@@ -24,6 +24,8 @@ export default {
   "models.title": "By model",
   "models.call": "{{count}} call",
   "models.calls": "{{count}} calls",
+  "tools.title": "By tool",
+  "tools.typical": "typically {{duration}}",
   empty: "No usage in this range yet.",
   error: "Could not load usage from the server.",
 }

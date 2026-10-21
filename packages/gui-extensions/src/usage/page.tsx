@@ -27,7 +27,7 @@ export default function UsagePage(props: {
       return input.server.client.session.stats({
         from: since(input.range),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        tools: "summary",
+        tools: "detail",
       })
     },
   )
@@ -57,6 +57,17 @@ export default function UsagePage(props: {
     const tools = stats.latest?.tools
     return tools && "totals" in tools ? tools.totals : { calls: 0, failed: 0 }
   }
+
+  // Most used first; the slowest typical call is shown so a tool that drags shows up.
+  const tools = createMemo(() => {
+    const value = stats()?.tools
+    return value && value.mode === "detail" ? value.usage.toSorted((a, b) => b.calls - a.calls) : []
+  })
+
+  const duration = (ms: number) =>
+    ms < 1000
+      ? `${Math.round(ms)} ms`
+      : `${new Intl.NumberFormat(props.locale(), { maximumFractionDigits: 1 }).format(ms / 1000)} s`
 
   // One bar per day of the range, including days without activity (the last 60 for "all time").
   const activity = createMemo(() => {
@@ -188,6 +199,34 @@ export default function UsagePage(props: {
                     </For>
                   </div>
                 </div>
+
+                <Show when={tools().length > 0}>
+                  <div class="flex flex-col gap-2">
+                    <span class="text-13-medium text-v2-text-text-base">{props.t("tools.title")}</span>
+                    <div class="flex max-h-80 flex-col divide-y divide-v2-border-border-muted overflow-y-auto rounded-lg border border-v2-border-border-muted">
+                      <For each={tools()}>
+                        {(row) => (
+                          <div class="flex items-center justify-between gap-3 px-3 py-2">
+                            <span class="truncate text-13-regular text-v2-text-text-base">{row.name}</span>
+                            <span class="shrink-0 text-12-regular text-v2-text-text-muted tabular-nums">
+                              {props.t(row.calls === 1 ? "models.call" : "models.calls", { count: number(row.calls) })}
+                              <Show when={row.failed > 0}>
+                                {" · "}
+                                <span class="text-v2-text-text-base">
+                                  {props.t("stat.toolsFailed", { count: number(row.failed) })}
+                                </span>
+                              </Show>
+                              <Show when={row.durationP50 !== undefined}>
+                                {" · "}
+                                {props.t("tools.typical", { duration: duration(row.durationP50 ?? 0) })}
+                              </Show>
+                            </span>
+                          </div>
+                        )}
+                      </For>
+                    </div>
+                  </div>
+                </Show>
               </div>
             )}
           </Show>
