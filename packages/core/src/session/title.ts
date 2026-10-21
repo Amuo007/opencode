@@ -30,6 +30,32 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionTitle") {}
 
 const truncate = (value: string) => (value.length <= MAX_LENGTH ? value : `${value.slice(0, MAX_LENGTH - 3)}...`)
+
+/**
+ * The model's title without list markers, quotes or emphasis, or undefined when it is not title-sized (small models
+ * sometimes answer the request or restate a plan instead of titling it).
+ */
+export const cleanTitle = (line: string) => {
+  const value = line
+    .replace(/^(?:\d+[.)]|[-*#>]+)\s*/, "")
+    .replace(/\*\*|__|`/g, "")
+    .replace(/^["'“”]+|["'“”.]+$/g, "")
+    .trim()
+  if (!value || value.length > 60 || value.split(/\s+/).length > 10) return undefined
+  return value
+}
+
+/** A title from the start of the user's first message, cut at a word boundary. */
+export const requestTitle = (text: string) => {
+  const line =
+    text
+      .split("\n")
+      .find((item) => item.trim())
+      ?.trim() ?? ""
+  if (line.length <= 50) return line
+  const cut = line.slice(0, 50)
+  return `${cut.slice(0, cut.lastIndexOf(" ") > 20 ? cut.lastIndexOf(" ") : 50)}…`
+}
 export const isUntitled = (session: SessionSchema.Info) =>
   isExactRootFallback({
     title: session.title,
@@ -132,15 +158,17 @@ export const layer = Layer.effect(
           ? yield* attempt({ session, agent: selection.agent, text, model: selection.primary })
           : undefined)
       if (!title) return
+      const named = cleanTitle(title) ?? requestTitle(firstUser.text)
+      if (!named) return
       const expectedSequence = (yield* Bus.latestSequence(db, sessionID)) + 1
       const current = yield* store.get(sessionID)
-      if (!current || current.title !== session.title || current.title === truncate(title)) return
+      if (!current || current.title !== session.title || current.title === truncate(named)) return
       yield* bus
         .publish(
           SessionEvent.Renamed,
           {
             sessionID: session.id,
-            title: truncate(title),
+            title: truncate(named),
           },
           { commit: (sequence) => (sequence === expectedSequence ? Effect.void : Effect.die(titleChanged)) },
         )
