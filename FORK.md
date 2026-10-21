@@ -22,6 +22,9 @@ own, and `--port 4096` to fix the port). `opencode service stop` stops the backg
 
 Or run from source with `bun run dev` in the repo root. It reads your normal `~/.config/opencode` config.
 
+To use the web UI like a desktop app, open it in Chrome and choose **Install OpenCode** (the install icon in the
+address bar, or ⋮ → Cast, save and share → Install page as app). It gets its own window and Dock icon.
+
 Requirements: Google Chrome (or Chromium, Edge, Brave, Arc) for the browser tools and the Agent browser panel.
 On macOS, the `screenshot` tool needs Screen Recording permission for the app that runs OpenCode (your terminal).
 
@@ -30,6 +33,7 @@ On macOS, the `screenshot` tool needs Screen Recording permission for the app th
 | Tool | What it does |
 |---|---|
 | `websearch` | Works out of the box. No consent popup: it picks a provider automatically and fails over to the next one on any error or empty result. Adds a keyless **Built-in** provider (DuckDuckGo → Bing → Mojeek, with anti-bot detection) and **Brave Search** (`BRAVE_API_KEY`). Searches can be limited with `allowed_domains` / `blocked_domains`. Pin a provider with `"websearch": { "provider": "builtin" }` or turn it off with `"websearch": false`. |
+| `webfetch` | Pages that are only a JavaScript shell (React, Vue, Svelte apps) are rendered in headless Chrome first, so the agent reads the real content instead of an empty `<div id="root">`. |
 | `chrome_open`, `chrome_snapshot`, `chrome_screenshot`, `chrome_click`, `chrome_type`, `chrome_press`, `chrome_select`, `chrome_wait`, `chrome_resize`, `chrome_scroll`, `chrome_eval`, `chrome_console`, `chrome_close` | A real headless Chrome the agent drives, in every client (terminal, web, `run`). Open pages or local dev servers, read them as numbered elements, click and type by number, take screenshots the model can see (shown inline in the web UI), run JS and read console errors. Uses any installed Chrome, Chromium, Edge, Brave or Arc, or `OPENCODE_BROWSER_PATH`. `OPENCODE_BROWSER_HEADED=1` shows the window. |
 | `memory_save`, `memory_read`, `memory_delete` | Persistent per-project memory. One Markdown file per fact plus a `MEMORY.md` index that is added to every request, so it survives new sessions and compaction. Stored under `<data>/memory/<project>/`. |
 | `notebook_read`, `notebook_edit` | Read Jupyter notebooks as cells with outputs; replace, insert or delete cells (outputs of edited code cells are cleared). Parallel edits to one notebook are serialized. |
@@ -88,7 +92,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Settings → Providers → Custom OpenAI-compatible provider**: now saves (base URL, API key, headers, models), so local servers can be added from the UI.
 - **Settings → Server → Web search**: choose Automatic, a specific provider (Built-in, Brave, Exa, Tavily, ...) or Off. The **API key** button saves, replaces or removes a key for Brave, Tavily, Exa, Firecrawl, Parallel or TinyFish (paid APIs are not blocked like scraping). From a terminal: `opencode auth login brave`, or set `BRAVE_API_KEY`.
 - **Context panel** (`/context`): *Output Speed (last / average)* in tokens per second next to context usage, tokens and cost.
-- Browser, memory, notebook, plan, background-stop, goal and notification tools have readable titles in the web UI and terminal.
+- Browser, memory, notebook, plan, screenshot, terminal, background-stop, goal and notification tools have readable titles in the web UI and terminal.
 
 ## Notes
 
