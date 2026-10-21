@@ -1,5 +1,5 @@
 import { lazy, onCleanup, Show, Suspense } from "solid-js"
-import { onIdle, Panel, Slot, usePanel, type PanelTab, type Setup } from "../sdk"
+import { Command, onIdle, Panel, Slot, usePanel, type PanelTab, type Setup } from "../sdk"
 import type definition from "./index"
 import { SessionContextUsage } from "./indicator"
 
@@ -26,6 +26,23 @@ const setup: Setup<typeof definition> = (ctx) => {
       </div>
     ),
   }
+
+  // `/context` opens the panel, like Claude Code's /context.
+  ctx.add(
+    Command,
+    (): Command => ({
+      id: "open",
+      title: ctx.t("command.open"),
+      group: ctx.t("command.category"),
+      section: "session",
+      slash: { name: "context" },
+      enabled: !!ctx.sessions.current(),
+      run: () => {
+        const session = ctx.sessions.current()
+        if (session) ctx.layout.open(`${ctx.id}:main`, session, { tab: "select" })
+      },
+    }),
+  )
 
   ctx.add(Slot, {
     at: "session.header",
