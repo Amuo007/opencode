@@ -338,14 +338,30 @@ const namespacedTools = [
   { prefix: "memory_", label: "Memory", icon: "✎" },
   { prefix: "notebook_", label: "Notebook", icon: "▤" },
 ]
-const detailKeys = ["url", "path", "name", "key", "option", "preset", "query", "text", "selector", "direction", "expression"]
+const detailKeys = [
+  "url",
+  "path",
+  "name",
+  "key",
+  "option",
+  "preset",
+  "query",
+  "text",
+  "selector",
+  "direction",
+  "expression",
+]
 
 function fallbackInline(ctx: ToolFrame): ToolInline {
   if (ctx.name === "plan_exit") {
     const plan = typeof ctx.input.plan === "string" ? ctx.input.plan : ""
-    const heading = plan.split("\n").find((line) => line.trim())?.replace(/^#+\s*/, "")
+    const heading = plan
+      .split("\n")
+      .find((line) => line.trim())
+      ?.replace(/^#+\s*/, "")
     return { icon: "☑", title: `Plan ready for approval${heading ? `: ${heading.slice(0, 100)}` : ""}` }
   }
+  if (ctx.name === "screenshot") return { icon: "▣", title: "Screenshot of screen" }
   if (ctx.name === "shell_stop") {
     const id = typeof ctx.input.shell_id === "string" ? ctx.input.shell_id : ""
     return { icon: "■", title: id ? `Stop background command ${id}` : "List background commands" }

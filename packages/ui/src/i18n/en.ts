@@ -215,6 +215,7 @@ const source = {
   "ui.tool.planExit": "Plan for approval",
   "ui.tool.lsp": "Code intelligence",
   "ui.tool.shellStop": "Stop background command",
+  "ui.tool.screenshot": "Screenshot of screen",
   "ui.tool.shellList": "Background commands",
   "ui.tool.goalComplete": "Goal complete",
   "ui.tool.goalFailed": "Goal not achieved",

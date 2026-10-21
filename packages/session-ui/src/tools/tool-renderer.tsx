@@ -370,6 +370,7 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
       if (tool.name === "plan_exit") return i18n.t("ui.tool.planExit")
       if (tool.name === "lsp") return i18n.t("ui.tool.lsp")
       if (tool.name === "shell_stop") return i18n.t("ui.tool.shellStop")
+      if (tool.name === "screenshot") return i18n.t("ui.tool.screenshot")
       if (tool.name === "goal_complete") return i18n.t("ui.tool.goalComplete")
       if (tool.name === "notify") return i18n.t("ui.tool.notify")
       return tool.name
@@ -485,7 +486,9 @@ export function CurrentContextToolGroup(props: {
   const tools = createMemo(() => props.parts.filter((part) => part.type === "tool"))
   // A collapsed group still shows the latest browser screenshot, like a chat attachment.
   const latestScreenshot = createMemo(() => {
-    const shot = tools().findLast((tool) => tool.name === "chrome_screenshot" && tool.state.status === "completed")
+    const shot = tools().findLast(
+      (tool) => (tool.name === "chrome_screenshot" || tool.name === "screenshot") && tool.state.status === "completed",
+    )
     const path = shot ? currentToolMetadata(shot).path : undefined
     return typeof path === "string" ? path : undefined
   })
@@ -1759,7 +1762,9 @@ function chromeSubtitle(action: string, input: Record<string, unknown>) {
   if (action === "wait") return textValue(input.text) ?? textValue(input.selector)
   if (action === "scroll") return textValue(input.direction)
   if (action === "resize")
-    return textValue(input.preset) ?? (typeof input.width === "number" ? `${input.width}x${input.height ?? ""}` : undefined)
+    return (
+      textValue(input.preset) ?? (typeof input.width === "number" ? `${input.width}x${input.height ?? ""}` : undefined)
+    )
   if (action === "eval") return textValue(input.expression)?.slice(0, 80)
   if (action !== "click" && action !== "type") return undefined
   if (typeof input.ref === "number") return `#${input.ref}`
@@ -1857,6 +1862,33 @@ ToolRegistry.register({
 
 ToolRegistry.register({ name: "notebook_read", render: NotebookTool })
 ToolRegistry.register({ name: "notebook_edit", render: NotebookTool })
+
+// Screenshots of the computer's screen render inline from the file the tool saved, like browser screenshots.
+ToolRegistry.register({
+  name: "screenshot",
+  render(props) {
+    const i18n = useI18n()
+    const image = createMemo(() => (props.status === "completed" ? textValue(props.metadata.path) : undefined))
+    return (
+      <BasicTool
+        {...props}
+        icon="monitor"
+        hasContent={!!image()}
+        defaultOpen={props.defaultOpen ?? true}
+        defer
+        onOpenChange={(open) => {
+          props.onOpenChange?.(open)
+          props.onContentRendered?.()
+        }}
+        trigger={{ title: i18n.t("ui.tool.screenshot") }}
+      >
+        <Show when={image()} keyed>
+          {(path) => <ReadImage path={path} onContentRendered={props.onContentRendered} />}
+        </Show>
+      </BasicTool>
+    )
+  },
+})
 
 ToolRegistry.register({
   name: "shell_stop",
