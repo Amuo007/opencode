@@ -361,6 +361,22 @@ function fallbackInline(ctx: ToolFrame): ToolInline {
       ?.replace(/^#+\s*/, "")
     return { icon: "☑", title: `Plan ready for approval${heading ? `: ${heading.slice(0, 100)}` : ""}` }
   }
+  if (ctx.name === "execute") {
+    // Code Mode: name the MCP tools the code calls instead of printing the code as JSON.
+    const code = typeof ctx.input.code === "string" ? ctx.input.code : ""
+    const calls = [
+      ...new Set(Array.from(code.matchAll(/tools\.([\w$]+)\.([\w$]+)\s*\(/g), (match) => `${match[1]}.${match[2]}`)),
+    ]
+    const first =
+      code
+        .split("\n")
+        .find((line) => line.trim())
+        ?.trim() ?? ""
+    return {
+      icon: "⚙",
+      title: calls.length ? `Run code → ${calls.join(", ")}` : `Run code ${first.slice(0, 100)}`.trim(),
+    }
+  }
   if (ctx.name === "screenshot") return { icon: "▣", title: "Screenshot of screen" }
   if (ctx.name === "terminal_read") return { icon: "▭", title: "Read your terminal" }
   if (ctx.name === "terminal_run") {
