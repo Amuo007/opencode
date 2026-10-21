@@ -13,6 +13,7 @@ import { pluginLabels } from "@/providers/catalog/plugin"
 import { ExternalLink } from "@/runtime/platform/external-link"
 import { SettingsList } from "@/settings/list"
 import { DialogAddMcpServer } from "@/settings/providers/mcp-dialog"
+import { DialogNewSkill } from "@/settings/providers/skill-dialog"
 import { SettingsMemories } from "@/settings/providers/memory"
 import { SettingsTools } from "@/settings/providers/tools"
 import { showToast } from "@/shell/notifications/toast"
@@ -103,6 +104,33 @@ export const SettingsExtensions: Component<{
     void data.location.skill.sync().catch(() => undefined)
   })
   const skills = () => data.location.skill.list() ?? []
+
+  // Skills in the global skills folder were created from here or by hand there, and can be removed here.
+  const [skillRootInfo] = createResource(
+    () => serverSdk.connection.status() === "connected",
+    () =>
+      serverSdk.api.skillEdit
+        .root()
+        .then((result) => result.data.directory)
+        .catch(() => undefined),
+  )
+  const skillRoot = () => skillRootInfo.latest
+  const removeSkill = async (file: string) => {
+    const name = file.slice((skillRoot() ?? "").length + 1).split("/")[0]
+    try {
+      await serverSdk.api.skillEdit.remove({ name })
+      showToast({
+        variant: "success",
+        icon: "circle-check",
+        title: language.t("settings.extensions.skill.removed", { name }),
+      })
+    } catch (error) {
+      showToast({
+        title: language.t("common.requestFailed"),
+        description: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
 
   return (
     <>
@@ -212,9 +240,20 @@ export const SettingsExtensions: Component<{
                 <span class="settings-extension-heading text-13-medium">
                   {language.t("settings.extensions.availableAll")}
                 </span>
-                <ExternalLink class="settings-extension-link text-13-regular" href="https://opencode.ai/docs/skills/">
-                  {language.t("settings.extensions.addSkills")}
-                </ExternalLink>
+                <div class="flex items-center gap-3">
+                  <ExternalLink class="settings-extension-link text-13-regular" href="https://opencode.ai/docs/skills/">
+                    {language.t("settings.extensions.addSkills")}
+                  </ExternalLink>
+                  <Button
+                    type="button"
+                    size="small"
+                    variant="neutral"
+                    icon="plus-small"
+                    onClick={() => dialog.show(() => <DialogNewSkill />)}
+                  >
+                    {language.t("settings.extensions.skill.new.button")}
+                  </Button>
+                </div>
               </div>
               <SettingsList variant="catalog">
                 <For each={skills()}>
@@ -224,6 +263,15 @@ export const SettingsExtensions: Component<{
                         <Icon name="post-skill" class="text-v2-icon-icon-muted shrink-0" />
                         <span class="settings-extension-name truncate">{skill.name}</span>
                       </div>
+                      <Show when={skillRoot() && skill.path.startsWith(skillRoot() + "/")}>
+                        <IconButton
+                          type="button"
+                          icon={<Icon name="trash" />}
+                          variant="ghost"
+                          aria-label={language.t("settings.extensions.skill.remove", { name: skill.name })}
+                          onClick={() => void removeSkill(skill.path)}
+                        />
+                      </Show>
                     </div>
                   )}
                 </For>

@@ -204,6 +204,12 @@ import type {
   BrowserViewGetOutput,
   BrowserViewActInput,
   BrowserViewActOutput,
+  SkillEditRootInput,
+  SkillEditRootOutput,
+  SkillEditCreateInput,
+  SkillEditCreateOutput,
+  SkillEditRemoveInput,
+  SkillEditRemoveOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1311,6 +1317,32 @@ const adaptGroupBrowserView = (raw: RawClient["server.browserView"]) => ({
   act: EndpointBrowserViewAct(raw),
 })
 
+const EndpointSkillEditRoot = (raw: RawClient["server.skillEdit"]) => (input?: SkillEditRootInput) =>
+  preserveEffect<SkillEditRootOutput>()(
+    raw["skillEdit.root"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointSkillEditCreate = (raw: RawClient["server.skillEdit"]) => (input: SkillEditCreateInput) =>
+  preserveEffect<SkillEditCreateOutput>()(
+    raw["skillEdit.create"]({
+      query: { location: input["location"] },
+      payload: { name: input["name"], description: input["description"], content: input["content"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointSkillEditRemove = (raw: RawClient["server.skillEdit"]) => (input: SkillEditRemoveInput) =>
+  preserveEffect<SkillEditRemoveOutput>()(
+    raw["skillEdit.remove"]({ params: { name: input["name"] }, query: { location: input["location"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
+const adaptGroupSkillEdit = (raw: RawClient["server.skillEdit"]) => ({
+  root: EndpointSkillEditRoot(raw),
+  create: EndpointSkillEditCreate(raw),
+  remove: EndpointSkillEditRemove(raw),
+})
+
 const EndpointRpcCall = (raw: RawClient["server.rpc"]) => (input: RpcCallInput) =>
   preserveEffect<RpcCallOutput>()(
     raw["rpc.call"]({
@@ -1720,6 +1752,7 @@ const adaptClient = (raw: RawClient) => ({
   skill: adaptGroupSkill(raw["server.skill"]),
   memory: adaptGroupMemory(raw["server.memory"]),
   browserView: adaptGroupBrowserView(raw["server.browserView"]),
+  skillEdit: adaptGroupSkillEdit(raw["server.skillEdit"]),
   rpc: adaptGroupRpc(raw["server.rpc"]),
   event: adaptGroupEvent(raw["server.event"]),
   pty: adaptGroupPty(raw["server.pty"]),

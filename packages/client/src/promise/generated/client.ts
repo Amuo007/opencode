@@ -202,6 +202,12 @@ import type {
   BrowserViewGetOutput,
   BrowserViewActInput,
   BrowserViewActOutput,
+  SkillEditRootInput,
+  SkillEditRootOutput,
+  SkillEditCreateInput,
+  SkillEditCreateOutput,
+  SkillEditRemoveInput,
+  SkillEditRemoveOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1786,6 +1792,45 @@ export function make(options: ClientOptions) {
             body: input["payload"],
             successStatus: 200,
             declaredStatuses: [400, 401, 404, 503],
+            empty: false,
+          },
+          requestOptions,
+        ),
+    },
+    skillEdit: {
+      root: (input?: SkillEditRootInput, requestOptions?: RequestOptions) =>
+        request<SkillEditRootOutput>(
+          {
+            method: "GET",
+            path: `/api/experimental/skill-files`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      create: (input: SkillEditCreateInput, requestOptions?: RequestOptions) =>
+        request<SkillEditCreateOutput>(
+          {
+            method: "POST",
+            path: `/api/experimental/skill-files`,
+            query: { location: input["location"] },
+            body: { name: input["name"], description: input["description"], content: input["content"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      remove: (input: SkillEditRemoveInput, requestOptions?: RequestOptions) =>
+        request<SkillEditRemoveOutput>(
+          {
+            method: "DELETE",
+            path: `/api/experimental/skill-files/${encodeURIComponent(input.name)}`,
+            query: { location: input["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
             empty: false,
           },
           requestOptions,

@@ -1911,6 +1911,45 @@ export interface BrowserViewApi<E = never> {
   readonly act: BrowserViewActOperation<E>
 }
 
+export type SkillEditRootInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type SkillEditRootOutput = {
+  readonly location: Location.PublicRef
+  readonly data: { readonly directory: string; readonly path?: string | undefined }
+}
+export type SkillEditRootOperation<E = never> = (input?: SkillEditRootInput) => Effect.Effect<SkillEditRootOutput, E>
+
+export type SkillEditCreateInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly description: string
+  readonly content: string
+}
+export type SkillEditCreateOutput = {
+  readonly location: Location.PublicRef
+  readonly data: { readonly directory: string; readonly path?: string | undefined }
+}
+export type SkillEditCreateOperation<E = never> = (
+  input: SkillEditCreateInput,
+) => Effect.Effect<SkillEditCreateOutput, E>
+
+export type SkillEditRemoveInput = {
+  readonly name: string
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type SkillEditRemoveOutput = {
+  readonly location: Location.PublicRef
+  readonly data: { readonly directory: string; readonly path?: string | undefined }
+}
+export type SkillEditRemoveOperation<E = never> = (
+  input: SkillEditRemoveInput,
+) => Effect.Effect<SkillEditRemoveOutput, E>
+
+export interface SkillEditApi<E = never> {
+  readonly root: SkillEditRootOperation<E>
+  readonly create: SkillEditCreateOperation<E>
+  readonly remove: SkillEditRemoveOperation<E>
+}
+
 export type RpcCallInput = {
   readonly rpcID: string
   readonly method: string
@@ -2411,6 +2450,7 @@ export interface AppApi<E = never> {
   readonly skill: SkillApi<E>
   readonly memory: MemoryApi<E>
   readonly browserView: BrowserViewApi<E>
+  readonly skillEdit: SkillEditApi<E>
   readonly rpc: RpcApi<E>
   readonly event: EventApi<E>
   readonly pty: PtyApi<E>

@@ -12,6 +12,7 @@ import { CommandHandler } from "./handlers/command"
 import { SkillHandler } from "./handlers/skill"
 import { MemoryHandler } from "./handlers/memory"
 import { BrowserViewHandler } from "./handlers/browser-view"
+import { SkillEditHandler } from "./handlers/skill-edit"
 import { RpcHandler } from "./handlers/rpc"
 import { EventHandler } from "./handlers/event"
 import { AgentHandler } from "./handlers/agent"
@@ -59,6 +60,7 @@ export const handlers = Layer.mergeAll(
   SkillHandler,
   MemoryHandler,
   BrowserViewHandler,
+  SkillEditHandler,
   RpcHandler,
   EventHandler.pipe(Layer.provide(EventFeed.layer)),
   PtyHandler,

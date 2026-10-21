@@ -271,6 +271,8 @@ export type BrowserViewInfo = {
   image: string
 }
 
+export type SkillEditInfo = { directory: string; path?: string | undefined }
+
 export type RpcOutput = { output?: any }
 
 export type PermissionReply = "once" | "always" | "reject"
@@ -5623,6 +5625,28 @@ export type BrowserViewActInput = {
 }
 
 export type BrowserViewActOutput = { location: LocationPublicRef; data: BrowserViewInfo }
+
+export type SkillEditRootInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type SkillEditRootOutput = { location: LocationPublicRef; data: SkillEditInfo }
+
+export type SkillEditCreateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string; readonly description: string; readonly content: string }["name"]
+  readonly description: { readonly name: string; readonly description: string; readonly content: string }["description"]
+  readonly content: { readonly name: string; readonly description: string; readonly content: string }["content"]
+}
+
+export type SkillEditCreateOutput = { location: LocationPublicRef; data: SkillEditInfo }
+
+export type SkillEditRemoveInput = {
+  readonly name: { readonly name: string }["name"]
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type SkillEditRemoveOutput = { location: LocationPublicRef; data: SkillEditInfo }
 
 export type RpcCallInput = {
   readonly rpcID: { readonly rpcID: string; readonly method: string }["rpcID"]

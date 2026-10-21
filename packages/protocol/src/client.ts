@@ -56,6 +56,7 @@ export const groupNames = {
   "server.skill": "skill",
   "server.memory": "memory",
   "server.browserView": "browserView",
+  "server.skillEdit": "skillEdit",
   "server.rpc": "rpc",
   "server.event": "event",
   "server.pty": "pty",

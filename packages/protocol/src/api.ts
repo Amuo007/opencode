@@ -14,6 +14,7 @@ import { CommandGroup } from "./groups/command.js"
 import { SkillGroup } from "./groups/skill.js"
 import { MemoryGroup } from "./groups/memory.js"
 import { BrowserViewGroup } from "./groups/browser-view.js"
+import { SkillEditGroup } from "./groups/skill-edit.js"
 import { RpcGroup } from "./groups/rpc.js"
 import { EventGroup, makeEventGroup } from "./groups/event.js"
 import type { Definition } from "@opencode/schema/event"
@@ -51,6 +52,7 @@ type LocationGroups<LocationId extends HttpApiMiddleware.AnyId> =
   | HttpApiGroup.AddMiddleware<typeof SkillGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof MemoryGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof BrowserViewGroup, LocationId>
+  | HttpApiGroup.AddMiddleware<typeof SkillEditGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof RpcGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof ShellGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof ReferenceGroup, LocationId>
@@ -184,6 +186,7 @@ const makeApiFromGroup = <
     .add(SkillGroup.middleware(locationMiddleware))
     .add(MemoryGroup.middleware(locationMiddleware))
     .add(BrowserViewGroup.middleware(locationMiddleware))
+    .add(SkillEditGroup.middleware(locationMiddleware))
     .add(RpcGroup.middleware(locationMiddleware))
     .add(eventGroup)
     .add(makePtyGroup(locationMiddleware))
