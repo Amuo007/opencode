@@ -4,6 +4,19 @@ This branch (`claude-parity`) adds tools and settings inspired by Claude Code on
 Everything works with any model, including local OpenAI-compatible servers, and nothing needs extra
 installs beyond Google Chrome for the browser tools.
 
+## Quick start
+
+```bash
+cd ~/Desktop/AMD-AGENTIC-TEST/opencode-v1
+alias oc="$PWD/packages/cli/dist/cli-darwin-arm64/bin/opencode"
+oc pair -o
+```
+
+The web app opens signed in. Pick your model (e.g. Halogen) in the model menu once; it is remembered. Then try a
+multi-step task (the task list appears above the composer), `/browser` to watch and use the agent's browser,
+**Settings → Extensions** for MCP servers (paste a README's JSON), skills, memory and tool switches, and
+**Settings → Usage** for tokens and per-tool stats.
+
 ## Run it
 
 A binary is already built at `packages/cli/dist/cli-darwin-arm64/bin/opencode`; rebuild it after pulling changes.
@@ -98,7 +111,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 
 - **Dark by default**: the app starts in the dark theme; pick System or Light in Settings → Appearance.
 - **Agent browser panel** (side panel *+* menu → *Agent browser*, or `/browser`): a live view of the headless Chrome the agent drives with its `chrome_*` tools, refreshed every second. Type a URL or `localhost:3000`, click, scroll, type and paste into the page, or **Shift+click an element** to attach a comment about it to your message ("make this button green"); the agent sees the same page, so you can set something up and ask it to continue. It opens by itself when the agent opens its browser or moves it to another page, unless you closed it in that session. API: `GET`/`POST /api/experimental/browser`.
-- **Settings → Usage** (or `/usage`): sessions, prompts, model calls, tool calls, input/output/reasoning/cache tokens, cost, active days and streak, a per-day chart and a per-model breakdown, for today, 7 days, 30 days or all time.
+- **Settings → Usage** (or `/usage`): sessions, prompts, model calls, tool calls, input/output/reasoning/cache tokens, cost, active days and streak, a per-day chart, a per-model breakdown and per-tool calls, failures and typical duration, for today, 7 days, 30 days or all time.
 - **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately. *Paste JSON* takes the snippet from an MCP server's README as is (`{"mcpServers": …}` from Claude Desktop or Cursor, VS Code's `{"servers": …}`, or OpenCode's `mcp`) and adds every server in it.
 - **Settings → Extensions → Skills → New skill**: write a skill (name, when to use it, instructions) without touching files; it is saved to `~/.config/opencode/skills/<name>/SKILL.md` and picked up at once. Skills in that folder get edit and remove buttons.
 - **Settings → Extensions → Tools**: switch the agent's tool groups on or off (browser, web search, web fetch, memory, your terminals, screen capture, code intelligence, notifications, task list).
