@@ -12,6 +12,8 @@ export const Info = Schema.Struct({
   height: Schema.Number,
   /** A JPEG of the viewport, base64 encoded. Empty while no browser is open. */
   image: Schema.String,
+  /** The last click on the page and how long ago it was, in milliseconds. */
+  pointer: Schema.optional(Schema.Struct({ x: Schema.Number, y: Schema.Number, age: Schema.Number })),
   /** The element an inspect action found. */
   element: Schema.optional(
     Schema.Struct({ label: Schema.String, selector: Schema.String, text: Schema.String, role: Schema.String }),

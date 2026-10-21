@@ -1879,6 +1879,7 @@ export type BrowserViewGetOutput = {
     readonly width: number
     readonly height: number
     readonly image: string
+    readonly pointer?: { readonly x: number; readonly y: number; readonly age: number } | undefined
     readonly element?:
       | { readonly label: string; readonly selector: string; readonly text: string; readonly role: string }
       | undefined
@@ -1906,6 +1907,7 @@ export type BrowserViewActOutput = {
     readonly width: number
     readonly height: number
     readonly image: string
+    readonly pointer?: { readonly x: number; readonly y: number; readonly age: number } | undefined
     readonly element?:
       | { readonly label: string; readonly selector: string; readonly text: string; readonly role: string }
       | undefined

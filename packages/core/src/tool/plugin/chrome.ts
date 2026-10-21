@@ -109,7 +109,12 @@ class Cdp {
     })
   }
 
+  /** The last mouse press sent to the page, so the live view can show where the agent clicked. */
+  pointer: { x: number; y: number; at: number } | undefined
+
   send(method: string, params: Record<string, unknown> = {}, timeout = 30_000) {
+    if (method === "Input.dispatchMouseEvent" && params.type === "mousePressed")
+      this.pointer = { x: Number(params.x), y: Number(params.y), at: Date.now() }
     const id = ++this.id
     return new Promise<Record<string, unknown>>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -413,7 +418,16 @@ const fail = (message: string) => (error: unknown) =>
   new ToolFailure({ message: `${message}: ${error instanceof Error ? error.message : String(error)}`, error })
 
 /** What the session UI's live view shows of a Location's browser. */
-export type View = { open: boolean; url: string; title: string; width: number; height: number; image: string }
+export type View = {
+  open: boolean
+  url: string
+  title: string
+  width: number
+  height: number
+  image: string
+  /** The last click on the page and how long ago it was, in milliseconds. */
+  pointer?: { x: number; y: number; age: number }
+}
 export type Action =
   | { type: "navigate"; url: string }
   | { type: "click"; x: number; y: number }
@@ -572,7 +586,13 @@ export const Plugin = {
           ) as Promise<Omit<View, "open" | "image">>
         ).catch(() => ({ url: "", title: "", ...VIEWPORT })),
       ])
-      return { open: true, ...info, image: String(shot.data ?? "") }
+      const pointer = page.page.pointer
+      return {
+        open: true,
+        ...info,
+        image: String(shot.data ?? ""),
+        ...(pointer ? { pointer: { x: pointer.x, y: pointer.y, age: Date.now() - pointer.at } } : {}),
+      }
     }
 
     const act = async (action: Action) => {

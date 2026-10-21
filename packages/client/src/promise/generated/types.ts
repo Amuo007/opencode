@@ -269,6 +269,7 @@ export type BrowserViewInfo = {
   width: number
   height: number
   image: string
+  pointer?: { x: number; y: number; age: number } | undefined
   element?: { label: string; selector: string; text: string; role: string } | undefined
 }
 

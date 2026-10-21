@@ -279,30 +279,44 @@ export default function AgentBrowserPanel(props: {
           }
         >
           {(current) => (
-            <img
-              tabindex="0"
-              class="w-full cursor-pointer rounded-md shadow outline-none focus:ring-1 focus:ring-v2-border-border-strong"
-              alt={props.t("screen.label")}
-              title={`${current().title} · ${props.t("hint")}`}
-              src={`data:image/jpeg;base64,${current().image}`}
-              draggable={false}
-              onClick={(event) => {
-                event.currentTarget.focus()
-                if (event.shiftKey) {
-                  void pick(point(event))
-                  return
-                }
-                void act({ type: "click", ...point(event) })
-              }}
-              onWheel={onWheel}
-              onKeyDown={onKey}
-              onPaste={(event) => {
-                const text = event.clipboardData?.getData("text/plain")
-                if (!text) return
-                event.preventDefault()
-                void act({ type: "type", text })
-              }}
-            />
+            <div class="relative">
+              <img
+                tabindex="0"
+                class="w-full cursor-pointer rounded-md shadow outline-none focus:ring-1 focus:ring-v2-border-border-strong"
+                alt={props.t("screen.label")}
+                title={`${current().title} · ${props.t("hint")}`}
+                src={`data:image/jpeg;base64,${current().image}`}
+                draggable={false}
+                onClick={(event) => {
+                  event.currentTarget.focus()
+                  if (event.shiftKey) {
+                    void pick(point(event))
+                    return
+                  }
+                  void act({ type: "click", ...point(event) })
+                }}
+                onWheel={onWheel}
+                onKeyDown={onKey}
+                onPaste={(event) => {
+                  const text = event.clipboardData?.getData("text/plain")
+                  if (!text) return
+                  event.preventDefault()
+                  void act({ type: "type", text })
+                }}
+              />
+              <Show when={current().pointer && current().pointer!.age < 2500 && current().pointer}>
+                {(pointer) => (
+                  <span
+                    class="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#3fb950]"
+                    style={{
+                      left: `${(pointer().x / current().width) * 100}%`,
+                      top: `${(pointer().y / current().height) * 100}%`,
+                      background: "rgba(63, 185, 80, 0.25)",
+                    }}
+                  />
+                )}
+              </Show>
+            </div>
           )}
         </Show>
       </div>
