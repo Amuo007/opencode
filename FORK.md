@@ -6,7 +6,12 @@ installs beyond Google Chrome for the browser tools.
 
 ## Run it
 
-Build a standalone binary for this machine (local channel: no auto-updates, its own database):
+A binary is already built at `packages/cli/dist/cli-darwin-arm64/bin/opencode`; rebuild it after pulling changes.
+It uses the local channel: no auto-updates and its own database (`opencode-local.db`), so your installed
+OpenCode and its sessions are left alone. Handy alias: `alias oc="$PWD/packages/cli/dist/cli-darwin-arm64/bin/opencode"`
+(run in the repo root).
+
+Build a standalone binary for this machine:
 
 ```bash
 cd packages/cli && OPENCODE_CHANNEL=local bun run script/build.ts --single --skip-install
