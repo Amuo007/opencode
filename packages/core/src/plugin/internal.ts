@@ -74,6 +74,7 @@ import { EditTool } from "../tool/plugin/edit.js"
 import { GlobTool } from "../tool/plugin/glob.js"
 import { GrepTool } from "../tool/plugin/grep.js"
 import { McpResourceTools } from "../tool/plugin/mcp-resource.js"
+import { MemoryTools } from "../tool/plugin/memory.js"
 import { OpenCodeTools } from "../tool/plugin/opencode.js"
 import { QuestionTool } from "../tool/plugin/question.js"
 import { ReadToolFileSystem } from "../tool/read-filesystem.js"
@@ -241,6 +242,7 @@ const pre = [
   GrepTool.Plugin,
   OpenCodeTools.Plugin,
   McpResourceTools.Plugin,
+  MemoryTools.Plugin,
   QuestionTool.Plugin,
   ReadTool.Plugin,
   ShellTool.Plugin,
