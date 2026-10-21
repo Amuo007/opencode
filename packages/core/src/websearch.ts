@@ -187,6 +187,7 @@ const layer = Layer.effect(
           provider = randomProvider(yield* Clock.currentTimeMillis, affinity) ?? provider
         }
         const attempted = new Set<ID>()
+        let empty: Response | undefined
         while (true) {
           if (options?.onProvider) yield* options.onProvider({ id: provider.id, name: provider.name })
           let cooldown = choice === "random" ? cooldowns.get(provider.id) : undefined
@@ -195,7 +196,16 @@ const layer = Layer.effect(
             const result = yield* provider
               .execute({ query: input.query })
               .pipe(Effect.flatMap(decodeResults), Effect.result)
-            if (result._tag === "Success") return new Response({ providerID: provider.id, results: result.success })
+            if (result._tag === "Success") {
+              if (result.success.length > 0 || choice !== "random")
+                return new Response({ providerID: provider.id, results: result.success })
+              // An empty answer is worth asking another provider before giving up. The session keeps its
+              // provider: an empty answer is not a failure.
+              empty ??= new Response({ providerID: provider.id, results: [] })
+              provider = randomProvider(yield* Clock.currentTimeMillis, { ...affinity }, attempted)
+              if (!provider) return empty
+              continue
+            }
             const cause = result.failure
             const error = new RequestError({ providerID: provider.id, cause })
             if (choice !== "random") return yield* error
@@ -210,7 +220,7 @@ const layer = Layer.effect(
             cooldowns.set(provider.id, cooldown)
           }
           provider = randomProvider(yield* Clock.currentTimeMillis, affinity, attempted)
-          if (!provider) return yield* cooldown.error
+          if (!provider) return empty ?? (yield* cooldown.error)
         }
       }),
     })

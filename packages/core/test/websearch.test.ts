@@ -488,7 +488,7 @@ describe("WebSearch", () => {
               if (input.query === "late") {
                 yield* Deferred.succeed(lateStarted, undefined)
                 yield* Deferred.await(lateRelease)
-                return []
+                return [{ url: "https://exa.example.com/late", title: "late", time: {} }]
               }
               calls.push(input.query)
               if (calls.length === 3) yield* Deferred.succeed(arrived, undefined)
@@ -618,6 +618,31 @@ describe("WebSearch", () => {
       expect(yield* websearch.providers()).toContainEqual({ id: provider.providerID, name: "TEMPORARY" })
       yield* Scope.close(scope, Exit.void)
       expect(yield* websearch.providers()).not.toContainEqual({ id: provider.providerID, name: "TEMPORARY" })
+    }),
+  )
+
+  it.effect("asks another provider when automatic search finds nothing", () =>
+    Effect.gen(function* () {
+      const websearch = yield* WebSearch.Service
+      const emptyCalls: string[] = []
+      yield* websearch.transform((editor) =>
+        editor.add({
+          id: WebSearch.ID.make("empty"),
+          name: "Empty",
+          execute: (input) => Effect.sync(() => (emptyCalls.push(input.query), [])),
+        }),
+      )
+      const full = yield* register("full")
+      yield* websearch.select("random")
+      for (const query of ["a", "b", "c", "d"]) {
+        const response = yield* websearch.query({ query })
+        expect(response.providerID).toBe(full.providerID)
+        expect(response.results).toHaveLength(1)
+      }
+      yield* websearch.select(WebSearch.ID.make("empty"))
+      const pinned = yield* websearch.query({ query: "pinned" })
+      expect(pinned.providerID).toBe(WebSearch.ID.make("empty"))
+      expect(pinned.results).toHaveLength(0)
     }),
   )
 })
