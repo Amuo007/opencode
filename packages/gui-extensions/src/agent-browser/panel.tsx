@@ -1,8 +1,8 @@
 import type { BrowserViewInfo } from "@opencode/client/promise"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
-import { createSignal, onCleanup, onMount, Show } from "solid-js"
-import type { MountedSession } from "../sdk"
+import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js"
+import { usePanel, type MountedSession } from "../sdk"
 
 type Payload = Parameters<MountedSession["server"]["client"]["browserView"]["act"]>[0]["payload"]
 
@@ -31,6 +31,7 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
   const [editing, setEditing] = createSignal(false)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal<string>()
+  const panel = usePanel()
   const location = () => ({ directory: props.session.directory })
   const client = () => props.session.server.client
 
@@ -41,7 +42,8 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
 
   let polling = false
   const poll = async () => {
-    if (polling || busy() || document.hidden) return
+    // Screenshots are only fetched while the tab is on screen.
+    if (polling || busy() || document.hidden || !panel.visible()) return
     polling = true
     try {
       show((await client().browserView.get({ location: location() })).data)
@@ -71,6 +73,8 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
     })
     return queue
   }
+
+  createEffect(on(panel.visible, (visible) => visible && void poll(), { defer: true }))
 
   onMount(() => {
     void poll()
