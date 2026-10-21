@@ -484,15 +484,19 @@ export const Plugin = {
       const existing = current
       const page = existing ? await existing.catch(() => undefined) : undefined
       if (!page?.alive) return closedView
+      // A page in the middle of navigating can fail either call; the view then reports what it can and
+      // an empty image, which the panel treats as "keep the last frame".
       const [shot, info] = await Promise.all([
         options?.image === false
           ? Promise.resolve({ data: "" })
-          : page.page.send("Page.captureScreenshot", { format: "jpeg", quality: 70 }),
-        page.evaluate(
-          "({ url: location.href, title: document.title, width: innerWidth, height: innerHeight })",
-        ) as Promise<Omit<View, "open" | "image">>,
+          : page.page.send("Page.captureScreenshot", { format: "jpeg", quality: 70 }).catch(() => ({ data: "" })),
+        (
+          page.evaluate(
+            "({ url: location.href, title: document.title, width: innerWidth, height: innerHeight })",
+          ) as Promise<Omit<View, "open" | "image">>
+        ).catch(() => ({ url: "", title: "", ...VIEWPORT })),
       ])
-      return { open: true, ...info, image: String(shot.data) }
+      return { open: true, ...info, image: String(shot.data ?? "") }
     }
 
     const act = async (action: Action) => {

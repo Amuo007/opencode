@@ -36,6 +36,12 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
   const client = () => props.session.server.client
 
   const show = (next: BrowserViewInfo) => {
+    // An empty frame (the page was mid-navigation) keeps the last image and address.
+    const previous = view()
+    if (next.open && !next.image && previous?.open) {
+      setView({ ...previous, ...(next.url ? { url: next.url, title: next.title } : {}) })
+      return
+    }
     setView(next)
     if (!editing()) setAddress(next.url)
   }
