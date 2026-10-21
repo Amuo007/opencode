@@ -368,6 +368,7 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
       if (tool.name.startsWith("memory_")) return i18n.t("ui.tool.memory")
       if (tool.name.startsWith("notebook_")) return i18n.t("ui.tool.notebook")
       if (tool.name === "plan_exit") return i18n.t("ui.tool.planExit")
+      if (tool.name === "lsp") return i18n.t("ui.tool.lsp")
       return tool.name
   }
 }

@@ -25,6 +25,7 @@ Or run from source with `bun run dev` in the repo root. It reads your normal `~/
 | `memory_save`, `memory_read`, `memory_delete` | Persistent per-project memory. One Markdown file per fact plus a `MEMORY.md` index that is added to every request, so it survives new sessions and compaction. Stored under `<data>/memory/<project>/`. |
 | `notebook_read`, `notebook_edit` | Read Jupyter notebooks as cells with outputs; replace, insert or delete cells (outputs of edited code cells are cleared). Parallel edits to one notebook are serialized. |
 | `plan_exit` | Plan mode's finish line. The Plan agent presents its plan; you approve it in a question card (or type changes) and the session switches to Build and starts implementing. |
+| `lsp` | Code intelligence from language servers: definition, references, implementation, hover (types and docs), file symbols, workspace symbol search, diagnostics. Finds TypeScript, Python, Go, Rust, C/C++, Swift, Ruby, Lua, Zig, PHP, C#, Java, Bash and YAML servers on PATH (TypeScript and Python fall back to `npx`), or set your own under `"lsp"` in opencode.json. After every edit, errors from a running server for that file are added to the edit result. `OPENCODE_DISABLE_LSP_DIAGNOSTICS=1` turns that off. |
 | `notify` | Desktop notification (macOS, Linux, Windows) when a long task finishes or needs you. |
 | `goal_complete` + `/goal` | `/goal <condition>` makes the agent keep working, turn after turn, until it calls `goal_complete` with evidence (max 25 rounds). `/goal stop` ends it. |
 

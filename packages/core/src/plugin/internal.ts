@@ -75,6 +75,7 @@ import { EditTool } from "../tool/plugin/edit.js"
 import { GlobTool } from "../tool/plugin/glob.js"
 import { GrepTool } from "../tool/plugin/grep.js"
 import { McpResourceTools } from "../tool/plugin/mcp-resource.js"
+import { LspTools } from "../tool/plugin/lsp.js"
 import { MemoryTools } from "../tool/plugin/memory.js"
 import { NotebookTools } from "../tool/plugin/notebook.js"
 import { OpenCodeTools } from "../tool/plugin/opencode.js"
@@ -250,6 +251,7 @@ const pre = [
   GrepTool.Plugin,
   OpenCodeTools.Plugin,
   McpResourceTools.Plugin,
+  LspTools.Plugin,
   MemoryTools.Plugin,
   NotebookTools.Plugin,
   PlanExitTool.Plugin,
