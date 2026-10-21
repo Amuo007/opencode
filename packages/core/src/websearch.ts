@@ -198,10 +198,15 @@ const layer = Layer.effect(
             if (result._tag === "Success") return new Response({ providerID: provider.id, results: result.success })
             const cause = result.failure
             const error = new RequestError({ providerID: provider.id, cause })
-            if (choice !== "random" || !HttpClientError.isHttpClientError(cause) || cause.response?.status !== 429)
-              return yield* error
+            if (choice !== "random") return yield* error
+            // Automatic selection fails over on any provider error, not only rate limits, so one
+            // unreachable or broken provider never stops the search.
             const now = yield* Clock.currentTimeMillis
-            cooldown = { until: now + cooldownMillis(cause.response.headers["retry-after"], now), error }
+            const retryAfter =
+              HttpClientError.isHttpClientError(cause) && cause.response?.status === 429
+                ? cooldownMillis(cause.response.headers["retry-after"], now)
+                : FAILURE_COOLDOWN_MILLIS
+            cooldown = { until: now + retryAfter, error }
             cooldowns.set(provider.id, cooldown)
           }
           provider = randomProvider(yield* Clock.currentTimeMillis, affinity, attempted)
@@ -211,6 +216,8 @@ const layer = Layer.effect(
     })
   }),
 )
+
+const FAILURE_COOLDOWN_MILLIS = 5 * 60_000
 
 function cooldownMillis(value: string | undefined, now: number) {
   if (!value?.trim()) return 60_000

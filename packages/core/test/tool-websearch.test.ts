@@ -203,10 +203,9 @@ describe("WebSearchTool registration", () => {
     }),
   )
 
-  it.effect("asks once and uses the default provider when web search is first enabled", () =>
+  it.effect("enables automatic provider selection on first use without asking", () =>
     Effect.gen(function* () {
       const fixture = yield* setup
-      fixture.formResponse = { status: "answered", answer: { choice: "allow" } }
       const registry = fixture.registry
 
       const first = yield* executeTool(registry, {
@@ -219,33 +218,7 @@ describe("WebSearchTool registration", () => {
       expect(fixture.websearch.sessionIDs).toEqual([sessionID, sessionID])
       expect(yield* fixture.kv.get(WebSearch.ProviderKey)).toBe("random")
       expect(fixture.websearch.queries).toHaveLength(2)
-      expect(fixture.formRequests).toEqual([
-        {
-          sessionID,
-          title: "Web Search",
-          metadata: { kind: "websearch.provider" },
-          fields: [
-            {
-              key: "choice",
-              description: "Allow OpenCode to search the web for up-to-date information?",
-              type: "string",
-              required: true,
-              custom: false,
-              options: [
-                {
-                  value: "allow",
-                  label: "Allow search via Exa, Parallel",
-                },
-                {
-                  value: "choose",
-                  label: "Choose another provider",
-                },
-                { value: "disable", label: "Disable web search" },
-              ],
-            },
-          ],
-        },
-      ])
+      expect(fixture.formRequests).toEqual([])
 
       const second = yield* executeTool(registry, {
         sessionID,
@@ -253,18 +226,16 @@ describe("WebSearchTool registration", () => {
         call: { type: "tool-call", id: "call-enabled", name: "websearch", input: { query: "effect schema" } },
       })
       expect(second.status).toBe("completed")
-      expect(["exa", "parallel"]).toContain(second.metadata?.provider)
       expect(second.metadata?.provider).toBe(first.metadata?.provider)
-      expect(fixture.formRequests).toHaveLength(1)
+      expect(fixture.formRequests).toEqual([])
       expect(fixture.websearch.queries).toHaveLength(3)
     }),
   )
 
-  it.effect("honors automatic consent when the configured provider is unavailable", () =>
+  it.effect("switches to automatic selection when the configured provider is unavailable", () =>
     Effect.gen(function* () {
       const fixture = yield* setup
       yield* fixture.websearch.transform((editor) => editor.default.set(WebSearch.ID.make("missing")))
-      fixture.formResponse = { status: "answered", answer: { choice: "allow" } }
       const result = yield* executeTool(fixture.registry, {
         sessionID,
         ...toolIdentity,
@@ -275,55 +246,29 @@ describe("WebSearchTool registration", () => {
       expect(result.metadata?.provider).toBe(
         (yield* fixture.websearch.query({ query: "next" }, { sessionID })).providerID,
       )
-      expect(fixture.formRequests).toHaveLength(1)
+      expect(fixture.formRequests).toEqual([])
     }),
   )
 
-  it.effect("asks a second form when choosing another provider", () =>
+  it.effect("keeps a pinned provider without asking", () =>
     Effect.gen(function* () {
       const fixture = yield* setup
-      fixture.formResponses.push(
-        { status: "answered", answer: { choice: "choose" } },
-        { status: "answered", answer: { provider: "parallel" } },
-      )
-      const registry = fixture.registry
-
+      yield* fixture.websearch.select(WebSearch.ID.make("parallel"))
       expect(
-        yield* executeTool(registry, {
+        yield* executeTool(fixture.registry, {
           sessionID,
           ...toolIdentity,
-          call: { type: "tool-call", id: "call-choose", name: "websearch", input: { query: "effect" } },
+          call: { type: "tool-call", id: "call-pinned", name: "websearch", input: { query: "effect" } },
         }),
       ).toMatchObject({ status: "completed", metadata: { provider: "parallel" } })
       expect(yield* fixture.kv.get(WebSearch.ProviderKey)).toBe(WebSearch.ID.make("parallel"))
-      expect(fixture.websearch.queries).toHaveLength(2)
-      expect(fixture.websearch.queries[1]?.providerID).toBe(WebSearch.ID.make("parallel"))
-      expect(fixture.formRequests[1]).toEqual({
-        sessionID,
-        title: "Choose a web search provider",
-        metadata: { kind: "websearch.provider" },
-        fields: [
-          {
-            key: "provider",
-            description: "Choose a provider for web search.",
-            type: "string",
-            required: true,
-            custom: false,
-            options: [
-              { value: "exa", label: "Exa" },
-              { value: "parallel", label: "Parallel" },
-            ],
-          },
-        ],
-      })
+      expect(fixture.formRequests).toEqual([])
     }),
   )
 
-  it.effect("shares provider consent across concurrent searches", () =>
+  it.effect("shares automatic selection across concurrent searches", () =>
     Effect.gen(function* () {
       const fixture = yield* setup
-      fixture.formResponse = { status: "answered", answer: { choice: "allow" } }
-      fixture.formWait = fixture.websearch.wait(5)
       const registry = fixture.registry
 
       const results = yield* Effect.all(
@@ -343,27 +288,25 @@ describe("WebSearchTool registration", () => {
       )
 
       expect(results.every((item) => item.status === "completed")).toBe(true)
-      expect(fixture.formRequests).toHaveLength(1)
+      expect(fixture.formRequests).toEqual([])
       expect(yield* fixture.kv.get(WebSearch.ProviderKey)).toBe("random")
     }),
   )
 
-  it.effect("persists the choice to disable web search", () =>
+  it.effect("stays off when web search was disabled", () =>
     Effect.gen(function* () {
       const fixture = yield* setup
-      fixture.formResponse = { status: "answered", answer: { choice: "disable" } }
-      const registry = fixture.registry
+      yield* fixture.websearch.select(false)
 
       expect(
-        yield* executeTool(registry, {
+        yield* executeTool(fixture.registry, {
           sessionID,
           ...toolIdentity,
           call: { type: "tool-call", id: "call-disable", name: "websearch", input: { query: "effect" } },
         }),
       ).toMatchObject({ status: "error" })
       expect(yield* fixture.kv.get(WebSearch.ProviderKey)).toBe(false)
-      expect(yield* fixture.websearch.default().pipe(Effect.flip)).toBeInstanceOf(WebSearch.DisabledError)
-      expect(fixture.websearch.queries).toHaveLength(1)
+      expect(fixture.formRequests).toEqual([])
     }),
   )
 

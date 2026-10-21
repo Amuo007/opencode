@@ -312,7 +312,7 @@ describe("WebSearch", () => {
     )
   })
 
-  it.effect("does not rotate or cool down providers for other failures", () =>
+  it.effect("fails over on any provider error with random and cools the failed provider down", () =>
     Effect.gen(function* () {
       const exa = yield* register("exa")
       const parallel = yield* register("parallel")
@@ -320,21 +320,25 @@ describe("WebSearch", () => {
       yield* websearch.select("random")
       const first = yield* websearch.query({ query: "first" })
       const provider = first.providerID === exa.providerID ? exa : parallel
-      yield* Effect.forEach(
-        [TestWebSearch.httpError(401), TestWebSearch.httpError(500), new Error("timeout")],
-        (cause) =>
-          Effect.gen(function* () {
-            provider.failure.cause = cause
-            expect(yield* websearch.query({ query: "failure" }).pipe(Effect.flip)).toMatchObject({
-              providerID: first.providerID,
-              cause,
-            })
-            expect((yield* websearch.default())?.id).toBe(first.providerID)
-          }),
-      )
+      const other = provider === exa ? parallel : exa
+      provider.failure.cause = new Error("timeout")
+      const failover = yield* websearch.query({ query: "failure" })
+      expect(failover.providerID).toBe(other.providerID)
       provider.failure.cause = undefined
-      expect((yield* websearch.query({ query: "recovered" })).providerID).toBe(first.providerID)
-      expect((first.providerID === exa.providerID ? parallel : exa).calls).toEqual([])
+      expect((yield* websearch.query({ query: "sticky" })).providerID).toBe(other.providerID)
+    }),
+  )
+
+  it.effect("reports the last error when every provider fails", () =>
+    Effect.gen(function* () {
+      const exa = yield* register("exa")
+      const parallel = yield* register("parallel")
+      const websearch = yield* WebSearch.Service
+      yield* websearch.select("random")
+      const cause = TestWebSearch.httpError(500)
+      exa.failure.cause = cause
+      parallel.failure.cause = cause
+      expect(yield* websearch.query({ query: "failure" }).pipe(Effect.flip)).toMatchObject({ cause })
     }),
   )
 
