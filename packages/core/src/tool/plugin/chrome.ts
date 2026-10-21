@@ -644,19 +644,30 @@ export const Plugin = {
           name: "screenshot",
           options,
           description:
-            "Take a screenshot of the current page and look at it. Use this to check layout, styling and visual bugs. Set fullPage to capture the whole scrollable page.",
+            "Take a screenshot of the current page and look at it. Use this to check layout, styling and visual bugs. Set fullPage to capture the whole scrollable page, or pass ref, selector or text to capture just that element.",
           input: Schema.Struct({
             fullPage: Schema.optionalKey(Schema.Boolean).annotate({ description: "Capture the full page height" }),
+            ...Target,
           }),
           output: PageOutput,
           execute: (input, context) =>
             Effect.gen(function* () {
               yield* allow(context, "*", input)
+              const element = input.ref !== undefined || input.selector !== undefined || input.text !== undefined
               const shot = yield* run("Could not take a screenshot", async (page) => {
+                // An element capture clips to its box (with a little margin) after scrolling it into view.
+                const box = element
+                  ? await pointAt(page, input).then(() =>
+                      page.evaluate(
+                        "(() => { const r = document.querySelector('[data-oc-target]').getBoundingClientRect(); return { x: Math.max(0, r.left - 8), y: Math.max(0, r.top - 8), width: Math.max(1, r.width + 16), height: Math.max(1, r.height + 16), scale: 1 } })()",
+                      ),
+                    )
+                  : undefined
                 const result = await page.page.send("Page.captureScreenshot", {
                   format: "png",
                   captureBeyondViewport: input.fullPage === true,
-                  ...(input.fullPage === true
+                  ...(box ? { clip: box as Record<string, number> } : {}),
+                  ...(!box && input.fullPage === true
                     ? {
                         clip: await page
                           .evaluate(
