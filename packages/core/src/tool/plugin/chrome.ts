@@ -263,6 +263,18 @@ async function waitForPort(directory: string, child: ChildProcess) {
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 400))
 
+/** Renders a page in a short-lived headless browser and returns its HTML after scripts ran. */
+export async function renderHTML(url: string) {
+  const browser = await Browser.launch()
+  try {
+    await browser.navigate(url)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    return String(await browser.evaluate("document.documentElement.outerHTML"))
+  } finally {
+    await browser.close()
+  }
+}
+
 // Numbers every visible interactive element so the model can act on `ref` values from the snapshot.
 const snapshotScript = `(() => {
   const selector = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],[role=checkbox],[role=radio],[role=tab],[role=menuitem],[role=option],[role=switch],[contenteditable=""],[contenteditable=true],[onclick],[tabindex]:not([tabindex="-1"])'

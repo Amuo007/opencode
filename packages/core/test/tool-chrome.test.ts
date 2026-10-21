@@ -17,3 +17,12 @@ describe("ChromeTools", () => {
     expect(list.some((item) => item.endsWith("chrome.exe"))).toBe(true)
   })
 })
+
+describe("webfetch script shells", () => {
+  test("detects JavaScript app shells", async () => {
+    const { isScriptShell } = await import("@opencode/core/tool/plugin/webfetch")
+    expect(isScriptShell('<div id="root"></div><script src="/app.js"></script>')).toBe(true)
+    expect(isScriptShell("<p>Plain page</p>")).toBe(false)
+    expect(isScriptShell(`<p>${"long text ".repeat(40)}</p><div id="root"></div><script></script>`)).toBe(false)
+  })
+})

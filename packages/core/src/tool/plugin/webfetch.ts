@@ -7,12 +7,15 @@ import { HttpClient, type HttpClientError, HttpClientRequest, HttpClientResponse
 import { Parser } from "htmlparser2"
 import { Permission } from "../../permission.js"
 import { convertHTMLToMarkdown, MAX_MARKDOWN_BYTES } from "../html-markdown.js"
+import { ChromeTools } from "./chrome.js"
 import { collectBoundedResponseBody } from "../http-body.js"
 
 export const name = "webfetch"
 export const MAX_RESPONSE_BYTES = MAX_MARKDOWN_BYTES
 export const DEFAULT_TIMEOUT_SECONDS = 30
 export const MAX_TIMEOUT_SECONDS = 120
+// Below this much visible text an HTML page is treated as a JavaScript shell.
+const MIN_STATIC_TEXT = 200
 
 export const description = `Fetch content from an HTTP or HTTPS URL and return it as text, markdown, or HTML. Markdown is the default.
 
@@ -149,10 +152,27 @@ export const Plugin = {
                 }),
               )
               const content = new TextDecoder().decode(body)
-              const output = yield* Effect.try({
+              const fetched = yield* Effect.try({
                 try: () => convert(content, contentType, input.format),
                 catch: (error) => error,
               })
+              // Pages built by JavaScript arrive as an empty shell; render those in headless Chrome
+              // when one is installed and keep the plain fetch result otherwise.
+              const staticText = extractTextFromHTML(content).trim().length
+              const output =
+                contentType.includes("text/html") &&
+                input.format !== "html" &&
+                isScriptShell(content, staticText) &&
+                ChromeTools.findChrome()
+                  ? yield* Effect.tryPromise(() => ChromeTools.renderHTML(input.url)).pipe(
+                      Effect.map((html) =>
+                        extractTextFromHTML(html).trim().length > staticText + MIN_STATIC_TEXT
+                          ? convert(html, "text/html", input.format)
+                          : fetched,
+                      ),
+                      Effect.orElseSucceed(() => fetched),
+                    )
+                  : fetched
               const result = {
                 url: input.url,
                 contentType,
@@ -165,6 +185,12 @@ export const Plugin = {
       )
       .pipe(Effect.orDie)
   }),
+}
+
+/** An HTML page with almost no text that loads scripts into an app root or asks for JavaScript. */
+export function isScriptShell(html: string, text = extractTextFromHTML(html).trim().length) {
+  if (text >= MIN_STATIC_TEXT || !/<script\b/i.test(html)) return false
+  return /id=["'](?:root|app|__next|__nuxt|svelte|main-app)["']|<noscript|enable javascript/i.test(html)
 }
 
 export function extractTextFromHTML(html: string) {
