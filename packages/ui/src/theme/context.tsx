@@ -10,6 +10,8 @@ import { resolveThemeVariantV2, themeV2ToCss } from "./v2/resolve"
 import type { DesktopTheme } from "./types"
 
 export type ColorScheme = "light" | "dark" | "system"
+// Dark until the user picks another scheme in Settings > Appearance.
+export const DEFAULT_COLOR_SCHEME: ColorScheme = "dark"
 
 const STORAGE_KEYS = {
   THEME_ID: "opencode-theme-id",
@@ -201,7 +203,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       clear()
     }
 
-    const colorScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? "system"
+    const colorScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? DEFAULT_COLOR_SCHEME
     const mode = colorScheme === "system" ? getSystemMode() : colorScheme
 
     const [store, setStore] = createStore({
@@ -309,7 +311,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
       const rawTheme = read(STORAGE_KEYS.THEME_ID) ?? props.defaultTheme
       const savedTheme = resolveStoredTheme(rawTheme, store.themes)
-      const savedScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? "system"
+      const savedScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? DEFAULT_COLOR_SCHEME
 
       if (rawTheme && rawTheme !== savedTheme) {
         write(STORAGE_KEYS.THEME_ID, savedTheme)
