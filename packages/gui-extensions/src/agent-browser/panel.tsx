@@ -115,7 +115,8 @@ export default function AgentBrowserPanel(props: {
     props.screen.composer.attach({
       type: "note",
       origin: "agent-browser",
-      commentID: crypto.randomUUID(),
+      // randomUUID exists only in secure contexts; a LAN address over http is not one.
+      commentID: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       label: current.label,
       icon: "select-element",
       subject: `the ${JSON.stringify(current.label)} element in the agent's browser at ${current.url}${details.length ? ` (${details.join("; ")})` : ""}`,
