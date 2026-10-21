@@ -15,11 +15,12 @@ const live = Effect.gen(function* () {
 
 export const BrowserViewHandler = HttpApiBuilder.group(Api, "server.browserView", (handlers) =>
   handlers
-    .handle("browserView.get", () =>
+    .handle("browserView.get", (ctx) =>
       response(
         Effect.gen(function* () {
           const browser = yield* live
-          return browser ? yield* Effect.promise(() => browser.view()) : ChromeTools.closedView
+          const image = ctx.query.image !== "false"
+          return browser ? yield* Effect.promise(() => browser.view({ image })) : ChromeTools.closedView
         }),
       ),
     )

@@ -1866,7 +1866,10 @@ export interface MemoryApi<E = never> {
   readonly remove: MemoryRemoveOperation<E>
 }
 
-export type BrowserViewGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type BrowserViewGetInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly image?: "true" | "false" | undefined
+}
 export type BrowserViewGetOutput = {
   readonly location: Location.PublicRef
   readonly data: {

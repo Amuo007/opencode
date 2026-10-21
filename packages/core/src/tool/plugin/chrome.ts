@@ -55,9 +55,14 @@ export function candidates(platform = process.platform, env = process.env) {
     ]
   return [
     ...configured,
-    ...["google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "microsoft-edge", "brave-browser"].flatMap(
-      (name) => (env.PATH ?? "").split(path.delimiter).map((dir) => path.join(dir, name)),
-    ),
+    ...[
+      "google-chrome",
+      "google-chrome-stable",
+      "chromium",
+      "chromium-browser",
+      "microsoft-edge",
+      "brave-browser",
+    ].flatMap((name) => (env.PATH ?? "").split(path.delimiter).map((dir) => path.join(dir, name))),
   ]
 }
 
@@ -241,7 +246,8 @@ class Browser {
   async navigate(url: string) {
     const loaded = this.page.once("Page.loadEventFired", 30_000)
     const result = await this.page.send("Page.navigate", { url })
-    if (typeof result.errorText === "string" && result.errorText) throw new Error(`Navigation failed: ${result.errorText}`)
+    if (typeof result.errorText === "string" && result.errorText)
+      throw new Error(`Navigation failed: ${result.errorText}`)
     await loaded
     await settle()
   }
@@ -363,7 +369,7 @@ export type Action =
   | { type: "type"; text: string }
   | { type: "key"; key: string }
   | { type: "back" | "forward" | "reload" }
-export type Live = { view: () => Promise<View>; act: (action: Action) => Promise<void> }
+export type Live = { view: (options?: { image?: boolean }) => Promise<View>; act: (action: Action) => Promise<void> }
 
 export const closedView: View = { open: false, url: "", title: "", ...VIEWPORT, image: "" }
 
@@ -406,15 +412,17 @@ export const Plugin = {
     )
 
     const allow = (context: Tool.Context, resource: string, metadata: Record<string, unknown>) =>
-      permission.assert({
-        action,
-        resources: [resource],
-        save: ["*"],
-        metadata,
-        sessionID: context.sessionID,
-        agent: context.agent,
-        source: { type: "tool", messageID: context.messageID, id: context.id },
-      }).pipe(Effect.mapError((error) => new ToolFailure({ message: "Permission denied: chrome", error })))
+      permission
+        .assert({
+          action,
+          resources: [resource],
+          save: ["*"],
+          metadata,
+          sessionID: context.sessionID,
+          agent: context.agent,
+          source: { type: "tool", messageID: context.messageID, id: context.id },
+        })
+        .pipe(Effect.mapError((error) => new ToolFailure({ message: "Permission denied: chrome", error })))
 
     const run = <A>(message: string, task: (page: Browser) => Promise<A>) =>
       Effect.tryPromise({ try: () => browser().then(task), catch: fail(message) })
@@ -452,21 +460,37 @@ export const Plugin = {
       })
 
     const press = async (page: Browser, name: string) => {
-      const key = keys[name.toLowerCase()] ?? { key: name, code: name, keyCode: 0, text: name.length === 1 ? name : undefined }
-      const base = { key: key.key, code: key.code, windowsVirtualKeyCode: key.keyCode, nativeVirtualKeyCode: key.keyCode }
-      await page.page.send("Input.dispatchKeyEvent", { type: key.text ? "keyDown" : "rawKeyDown", ...base, ...(key.text ? { text: key.text } : {}) })
+      const key = keys[name.toLowerCase()] ?? {
+        key: name,
+        code: name,
+        keyCode: 0,
+        text: name.length === 1 ? name : undefined,
+      }
+      const base = {
+        key: key.key,
+        code: key.code,
+        windowsVirtualKeyCode: key.keyCode,
+        nativeVirtualKeyCode: key.keyCode,
+      }
+      await page.page.send("Input.dispatchKeyEvent", {
+        type: key.text ? "keyDown" : "rawKeyDown",
+        ...base,
+        ...(key.text ? { text: key.text } : {}),
+      })
       await page.page.send("Input.dispatchKeyEvent", { type: "keyUp", ...base })
     }
 
-    const view = async (): Promise<View> => {
+    const view = async (options?: { image?: boolean }): Promise<View> => {
       const existing = current
       const page = existing ? await existing.catch(() => undefined) : undefined
       if (!page?.alive) return closedView
       const [shot, info] = await Promise.all([
-        page.page.send("Page.captureScreenshot", { format: "jpeg", quality: 70 }),
-        page.evaluate("({ url: location.href, title: document.title, width: innerWidth, height: innerHeight })") as Promise<
-          Omit<View, "open" | "image">
-        >,
+        options?.image === false
+          ? Promise.resolve({ data: "" })
+          : page.page.send("Page.captureScreenshot", { format: "jpeg", quality: 70 }),
+        page.evaluate(
+          "({ url: location.href, title: document.title, width: innerWidth, height: innerHeight })",
+        ) as Promise<Omit<View, "open" | "image">>,
       ])
       return { open: true, ...info, image: String(shot.data) }
     }
@@ -597,7 +621,12 @@ export const Plugin = {
                 output: { url: shot.url, title: shot.title },
                 content: [
                   { type: "text" as const, text: `Screenshot of ${shot.url} (saved to ${shot.file})` },
-                  { type: "file" as const, uri: `data:image/png;base64,${shot.data}`, mime: "image/png", name: shot.file },
+                  {
+                    type: "file" as const,
+                    uri: `data:image/png;base64,${shot.data}`,
+                    mime: "image/png",
+                    name: shot.file,
+                  },
                 ],
                 metadata: { path: shot.file, url: shot.url },
               }
@@ -607,7 +636,8 @@ export const Plugin = {
         editor.add({
           name: "click",
           options,
-          description: "Click an element by ref (from chrome_snapshot), CSS selector, or visible text, or click x/y coordinates.",
+          description:
+            "Click an element by ref (from chrome_snapshot), CSS selector, or visible text, or click x/y coordinates.",
           input: Schema.Struct({
             ...Target,
             x: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport x coordinate" }),
@@ -619,7 +649,9 @@ export const Plugin = {
               yield* allow(context, "*", input)
               const output = yield* run("Could not click", async (page) => {
                 const point =
-                  input.x !== undefined && input.y !== undefined ? { x: input.x, y: input.y } : await pointAt(page, input)
+                  input.x !== undefined && input.y !== undefined
+                    ? { x: input.x, y: input.y }
+                    : await pointAt(page, input)
                 const mouse = { x: point.x, y: point.y, button: "left", clickCount: 1 }
                 await page.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y })
                 await page.page.send("Input.dispatchMouseEvent", { type: "mousePressed", ...mouse })
@@ -828,7 +860,7 @@ export const Plugin = {
             Effect.gen(function* () {
               yield* allow(context, input.expression, input)
               const value = yield* run("Script failed", (page) => page.evaluate(input.expression))
-              const output = value === undefined ? "undefined" : JSON.stringify(value, null, 2) ?? String(value)
+              const output = value === undefined ? "undefined" : (JSON.stringify(value, null, 2) ?? String(value))
               const bounded = output.length > MAX_TEXT ? `${output.slice(0, MAX_TEXT)}\n[truncated]` : output
               return { output: { output: bounded }, content: bounded }
             }),

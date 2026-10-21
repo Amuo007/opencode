@@ -1,4 +1,4 @@
-import { lazy, onCleanup, Suspense } from "solid-js"
+import { createEffect, lazy, onCleanup, Suspense } from "solid-js"
 import { Command, MenuItem, onIdle, Panel, type PanelTab, type Setup } from "../sdk"
 import type AgentBrowser from "./index"
 
@@ -10,6 +10,28 @@ const setup: Setup<typeof AgentBrowser> = (ctx) => {
     const session = ctx.sessions.current()
     if (session) ctx.layout.open(`${ctx.id}:main`, session, { tab: "select" })
   }
+
+  // Opens the panel when the agent starts using its browser in the routed session, like the desktop's browser pane.
+  // Watches without screenshots; a browser already open when the session is routed does not reopen a closed tab.
+  createEffect(() => {
+    const session = ctx.sessions.current()
+    if (!session) return
+    let seen: boolean | undefined
+    const check = async () => {
+      if (document.hidden) return
+      const view = await session.server.client.browserView
+        .get({ location: { directory: session.directory }, image: "false" })
+        .then((result) => result.data)
+        .catch(() => undefined)
+      if (!view) return
+      if (seen === false && view.open && ctx.layout.state(`${ctx.id}:main`, session) === "closed")
+        ctx.layout.open(`${ctx.id}:main`, session, { tab: "select", background: true })
+      seen = view.open
+    }
+    void check()
+    const timer = setInterval(() => void check(), 3000)
+    onCleanup(() => clearInterval(timer))
+  })
 
   // One tab object for every session, so a session switch does not remount its trigger.
   const tab: PanelTab = {

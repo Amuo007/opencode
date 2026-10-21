@@ -1770,7 +1770,7 @@ export function make(options: ClientOptions) {
           {
             method: "GET",
             path: `/api/experimental/browser`,
-            query: { location: input?.["location"] },
+            query: { location: input?.["location"], image: input?.["image"] },
             successStatus: 200,
             declaredStatuses: [400, 401, 404, 503],
             empty: false,

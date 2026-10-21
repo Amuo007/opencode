@@ -1,13 +1,20 @@
 import { BrowserView } from "@opencode/schema/browser-view"
 import { Location } from "@opencode/schema/location"
+import { Schema } from "effect"
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api"
 import { InvalidRequestError, ServiceUnavailableError } from "../errors.js"
 import { LocationQuery, locationQueryOpenApi } from "./location.js"
 
+const ViewQuery = Schema.Struct({
+  ...LocationQuery.fields,
+  // "false" skips the screenshot, for clients that only watch whether the browser is open.
+  image: Schema.optional(Schema.Literals(["true", "false"])),
+})
+
 export const BrowserViewGroup = HttpApiGroup.make("server.browserView")
   .add(
     HttpApiEndpoint.get("browserView.get", "/api/experimental/browser", {
-      query: LocationQuery,
+      query: ViewQuery,
       success: Location.response(BrowserView.Info),
       error: ServiceUnavailableError,
     })

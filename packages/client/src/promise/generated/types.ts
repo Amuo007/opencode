@@ -5599,7 +5599,14 @@ export type MemoryRemoveInput = {
 export type MemoryRemoveOutput = void
 
 export type BrowserViewGetInput = {
-  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined } | undefined
+    readonly image?: "true" | "false" | undefined
+  }["location"]
+  readonly image?: {
+    readonly location?: { readonly directory?: string | undefined } | undefined
+    readonly image?: "true" | "false" | undefined
+  }["image"]
 }
 
 export type BrowserViewGetOutput = { location: LocationPublicRef; data: BrowserViewInfo }

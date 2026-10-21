@@ -1292,7 +1292,9 @@ const adaptGroupMemory = (raw: RawClient["server.memory"]) => ({
 
 const EndpointBrowserViewGet = (raw: RawClient["server.browserView"]) => (input?: BrowserViewGetInput) =>
   preserveEffect<BrowserViewGetOutput>()(
-    raw["browserView.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+    raw["browserView.get"]({ query: { location: input?.["location"], image: input?.["image"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
   )
 
 type BrowserViewActRequest = Parameters<RawClient["server.browserView"]["browserView.act"]>[0]
