@@ -1,0 +1,59 @@
+# OpenCode fork: what's new
+
+This branch (`claude-parity`) adds tools and settings inspired by Claude Code on top of OpenCode v2.
+Everything works with any model, including local OpenAI-compatible servers, and nothing needs extra
+installs beyond Google Chrome for the browser tools.
+
+## Run it
+
+Build a standalone binary for this machine (local channel: no auto-updates, its own database):
+
+```bash
+cd packages/cli && OPENCODE_CHANNEL=local bun run script/build.ts --single --skip-install
+./dist/cli-darwin-arm64/bin/opencode            # terminal UI
+./dist/cli-darwin-arm64/bin/opencode serve      # web UI at the printed address
+```
+
+Or run from source with `bun run dev` in the repo root. It reads your normal `~/.config/opencode` config.
+
+## New tools for the agent
+
+| Tool | What it does |
+|---|---|
+| `websearch` | Works out of the box. No consent popup: it picks a provider automatically and fails over to the next one on any error. Adds a keyless **Built-in** provider (DuckDuckGo → Bing → Mojeek, with anti-bot detection) and **Brave Search** (`BRAVE_API_KEY`). Pin a provider with `"websearch": { "provider": "builtin" }` or turn it off with `"websearch": false`. |
+| `chrome_open`, `chrome_snapshot`, `chrome_screenshot`, `chrome_click`, `chrome_type`, `chrome_press`, `chrome_scroll`, `chrome_eval`, `chrome_console`, `chrome_close` | A real headless Chrome the agent drives, in every client (terminal, web, `run`). Open pages or local dev servers, read them as numbered elements, click and type by number, take screenshots the model can see (shown inline in the web UI), run JS and read console errors. Uses any installed Chrome, Chromium, Edge, Brave or Arc, or `OPENCODE_BROWSER_PATH`. `OPENCODE_BROWSER_HEADED=1` shows the window. |
+| `memory_save`, `memory_read`, `memory_delete` | Persistent per-project memory. One Markdown file per fact plus a `MEMORY.md` index that is added to every request, so it survives new sessions and compaction. Stored under `<data>/memory/<project>/`. |
+| `notebook_read`, `notebook_edit` | Read Jupyter notebooks as cells with outputs; replace, insert or delete cells (outputs of edited code cells are cleared). Parallel edits to one notebook are serialized. |
+| `plan_exit` | Plan mode's finish line. The Plan agent presents its plan; you approve it in a question card (or type changes) and the session switches to Build and starts implementing. |
+| `goal_complete` + `/goal` | `/goal <condition>` makes the agent keep working, turn after turn, until it calls `goal_complete` with evidence (max 25 rounds). `/goal stop` ends it. |
+
+## Hooks
+
+Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.opencode/hooks.json`:
+
+```json
+{
+  "PreToolUse": [
+    { "matcher": "shell", "command": "./scripts/check-command.sh" }
+  ],
+  "PostToolUse": [
+    { "matcher": "edit|write", "command": "npx prettier --write \"$OPENCODE_FILE_PATH\"", "timeout": 30 }
+  ]
+}
+```
+
+- `matcher` is a pattern for tool names (`edit|write`, `chrome_.*`, `*`).
+- The command gets the call as JSON on stdin and `OPENCODE_TOOL`, `OPENCODE_FILE_PATH`, `OPENCODE_PROJECT_DIR`, `OPENCODE_HOOK_EVENT` in its environment.
+- Exit code **2** blocks a `PreToolUse` call (stderr is the reason the model sees) or, for `PostToolUse`, sends stderr back to the model as feedback. Other exit codes are logged and ignored.
+
+## App and settings
+
+- **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
+- **Settings → Providers → Custom OpenAI-compatible provider**: now saves (base URL, API key, headers, models), so local servers can be added from the UI.
+- **Context panel**: *Output Speed (last / average)* in tokens per second next to context usage, tokens and cost.
+- Browser, memory, notebook and plan tools have readable titles in the web UI and terminal.
+
+## Notes
+
+- `bun run lint` needs Node 22+ (oxlint loads TypeScript plugins); on older Node use `bun run typecheck`.
+- Upstream: https://github.com/anomalyco/opencode
