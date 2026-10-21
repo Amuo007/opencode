@@ -6,6 +6,7 @@ import type { SessionHooks } from "@opencode/plugin/effect/session"
 import type { ShellCreateBefore } from "@opencode/plugin/effect/shell"
 import type { Tool } from "@opencode/schema/tool"
 import { Deferred, Effect, Schema, Scope } from "effect"
+import { open } from "node:fs/promises"
 import { Config } from "../../config.js"
 import { Environment } from "../../environment/index.js"
 import { Job } from "../../job.js"
@@ -59,7 +60,22 @@ export const Input = Schema.Struct({
     description:
       "Run the command in the background and return immediately (useful for dev servers and long-running builds). You do not need to use '&' at the end of the command when using this parameter. You will be notified when it completes. DO NOT poll for completion.",
   }),
+  notify_on: Schema.optionalKey(Schema.String).annotate({
+    description:
+      "With background: a regular expression (case-insensitive) checked against each output line. When a line matches you are notified with it and the recent output, without waiting for the command to finish, e.g. 'ready|listening|local:' for a dev server or 'error|fail' for a watcher.",
+  }),
 })
+
+const WATCH_INTERVAL_MS = 1_000
+const WATCH_GAP_MS = 5_000
+const WATCH_LIMIT = 10
+
+/** Matching lines in new output, given the text left over from the previous read. */
+export function matchLines(pattern: RegExp, carry: string, chunk: string) {
+  const lines = (carry + chunk).split("\n")
+  const rest = lines.pop() ?? ""
+  return { matches: lines.filter((line) => pattern.test(line)), rest }
+}
 
 const StructuredOutput = Schema.Struct({
   exit: Schema.optionalKey(Schema.Number),
@@ -189,6 +205,46 @@ export const Plugin = {
       Effect.forkIn(scope, { startImmediately: true }),
     )
 
+    // notify_on: reads the background command's output file and notifies the session when a line matches,
+    // at most every WATCH_GAP_MS and WATCH_LIMIT times, until the command stops.
+    const watchOutput = Effect.fn("ShellTool.watchOutput")(
+      function* (sessionID: SessionSchema.ID, id: string, command: string, file: string, pattern: RegExp) {
+        const state = { offset: 0, carry: "", tail: "", sent: 0, last: 0 }
+        while (state.sent < WATCH_LIMIT) {
+          yield* Effect.sleep(WATCH_INTERVAL_MS)
+          const chunk = yield* Effect.promise(async () => {
+            const handle = await open(file, "r").catch(() => undefined)
+            if (!handle) return ""
+            try {
+              const buffer = Buffer.alloc(64 * 1024)
+              const { bytesRead } = await handle.read(buffer, 0, buffer.length, state.offset)
+              state.offset += bytesRead
+              return buffer.subarray(0, bytesRead).toString("utf8")
+            } finally {
+              await handle.close()
+            }
+          })
+          const { matches, rest } = matchLines(pattern, state.carry, chunk)
+          state.carry = rest
+          state.tail = (state.tail + chunk).slice(-8_000)
+          const running = (yield* jobs.get(id))?.status === "running"
+          if (matches.length > 0 && Date.now() - state.last >= WATCH_GAP_MS) {
+            state.sent++
+            state.last = Date.now()
+            yield* sessions.synthetic({
+              sessionID,
+              description: `${command} printed a match`,
+              text: `<shell id="${id}" state="running" command="${command}">\nOutput matched /${pattern.source}/: ${matches.at(-1)}\n\nRecent output:\n${state.tail.trimEnd().split("\n").slice(-20).join("\n")}\n</shell>`,
+              metadata: { source: "shell", shellID: id, state: "running" },
+            })
+          }
+          if (!running) return
+        }
+      },
+      (effect) => effect.pipe(Effect.ignore),
+      Effect.forkIn(scope, { startImmediately: true }),
+    )
+
     yield* ctx.tool
       .transform((editor) => {
         editor.add({
@@ -199,6 +255,13 @@ export const Plugin = {
           output: Output,
           execute: (input, context) =>
             Effect.gen(function* () {
+              const pattern =
+                input.background === true && input.notify_on
+                  ? yield* Effect.try({
+                      try: () => new RegExp(input.notify_on ?? "", "i"),
+                      catch: () => new Error(`notify_on is not a valid regular expression: ${input.notify_on}`),
+                    })
+                  : undefined
               const timeout = input.background === true ? (input.timeout ?? 0) : (input.timeout ?? DEFAULT_TIMEOUT_MS)
               let finalTimeout = timeout
               const info = yield* shell.create(
@@ -255,6 +318,7 @@ export const Plugin = {
               if (input.background === true) {
                 yield* jobs.background(job.id)
                 yield* notifyWhenDone(context.sessionID, job.id, info.id, info.command, settled)
+                if (pattern) yield* watchOutput(context.sessionID, job.id, info.command, info.file, pattern)
                 return backgroundResult(info.id, info.file)
               }
 
