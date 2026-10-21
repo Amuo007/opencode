@@ -27,6 +27,11 @@ own, and `--port 4096` to fix the port). `opencode service stop` stops the backg
 
 Or run from source with `bun run dev` in the repo root. It reads your normal `~/.config/opencode` config.
 
+Pick your model once in the web app's model menu and it is remembered. Without a `"model"` in your config the
+first choice is OpenCode's free tier, which refuses development builds ("OpenCode 1.18.0 or newer is required"),
+so for the terminal UI and `opencode run` set one, e.g. `"model": "halogen/halogen-qwen3.8-flash-next"`
+(OpenCode 1.x reads the same key).
+
 To use the web UI like a desktop app, open it in Chrome and choose **Install OpenCode** (the install icon in the
 address bar, or ⋮ → Cast, save and share → Install page as app). It gets its own window and Dock icon.
 
