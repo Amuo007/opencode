@@ -751,6 +751,7 @@ export const dict = {
   "settings.extensions.addSkills": "How to add skills",
   "settings.extensions.tab.memory": "Memory",
   "settings.extensions.tab.tools": "Tools",
+  "settings.extensions.mcp.empty": "No MCP servers yet. Add one to give the agent new tools, for example a database, GitHub or Blender.",
   "settings.extensions.tools.title": "Agent tools",
   "settings.extensions.tools.hint": "Off removes them from the model; fewer tools means shorter prompts",
   "settings.extensions.tools.chrome": "Browser",

@@ -2001,7 +2001,8 @@
 }
 
 .settings-extensions-tabs[data-component="tabs-v2"][data-variant="pill"] > [data-slot="tabs-v2-list"] {
-  width: min(280px, 100%);
+  width: fit-content;
+  max-width: 100%;
 }
 
 .settings-subtabs[data-component="tabs-v2"][data-variant="pill"] > [data-slot="tabs-v2-list"] {

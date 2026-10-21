@@ -1,4 +1,4 @@
-import { Component, For, createEffect, createMemo, createResource } from "solid-js"
+import { Component, For, Show, createEffect, createMemo, createResource } from "solid-js"
 import { Button } from "@opencode/ui/button"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Icon } from "@opencode/ui/icon"
@@ -149,6 +149,11 @@ export const SettingsExtensions: Component<{
                   {language.t("settings.extensions.mcp.add.button")}
                 </Button>
               </div>
+              <Show when={mcps().length === 0}>
+                <div class="text-13-regular text-v2-text-text-muted py-4">
+                  {language.t("settings.extensions.mcp.empty")}
+                </div>
+              </Show>
               <SettingsList variant="catalog">
                 <For each={mcps()}>
                   {(item) => (
