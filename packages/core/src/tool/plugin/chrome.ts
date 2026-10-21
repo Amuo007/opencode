@@ -212,6 +212,8 @@ class Browser {
       page.send("Emulation.setDeviceMetricsOverride", { ...VIEWPORT, deviceScaleFactor: 1, mobile: false }),
       page.send("Page.addScriptToEvaluateOnNewDocument", { source: sameTabScript }),
       page.send("Network.enable"),
+      // A development browser: edited CSS and JS show up on the next load, as with DevTools' "Disable cache".
+      page.send("Network.setCacheDisabled", { cacheDisabled: true }),
     ])
     const track = (id: unknown) => browser.requests.find((item) => item.id === id)
     page.on("Network.requestWillBeSent", (params) => {
