@@ -11,12 +11,16 @@ const setup: Setup<typeof AgentBrowser> = (ctx) => {
     if (session) ctx.layout.open(`${ctx.id}:main`, session, { tab: "select" })
   }
 
-  // Opens the panel when the agent starts using its browser in the routed session, like the desktop's browser pane.
-  // Watches without screenshots; a browser already open when the session is routed does not reopen a closed tab.
+  // Opens the panel when the agent opens its browser or navigates it to another page in the routed session, like the
+  // desktop's browser pane. Watches without screenshots. A session whose auto-opened panel the user closed is not
+  // opened again; the set outlives the effect, which re-runs whenever the routed session object changes.
+  const opened = new Set<string>()
+  const dismissed = new Set<string>()
   createEffect(() => {
     const session = ctx.sessions.current()
     if (!session) return
-    let seen: boolean | undefined
+    const key = `${ctx.id}:main`
+    const state = { seen: undefined as { open: boolean; url: string } | undefined }
     const check = async () => {
       if (document.hidden) return
       const view = await session.server.client.browserView
@@ -24,9 +28,14 @@ const setup: Setup<typeof AgentBrowser> = (ctx) => {
         .then((result) => result.data)
         .catch(() => undefined)
       if (!view) return
-      if (seen === false && view.open && ctx.layout.state(`${ctx.id}:main`, session) === "closed")
-        ctx.layout.open(`${ctx.id}:main`, session, { tab: "select", background: true })
-      seen = view.open
+      const closed = ctx.layout.state(key, session) === "closed"
+      if (opened.has(session.key) && closed) dismissed.add(session.key)
+      const moved = state.seen !== undefined && view.open && (!state.seen.open || view.url !== state.seen.url)
+      if (moved && closed && !dismissed.has(session.key)) {
+        ctx.layout.open(key, session, { tab: "select", background: true })
+        opened.add(session.key)
+      }
+      state.seen = { open: view.open, url: view.url }
     }
     void check()
     const timer = setInterval(() => void check(), 3000)
