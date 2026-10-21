@@ -260,6 +260,8 @@ export type PermissionSavedID = string
 
 export type CommandInfo = { name: string; description?: string }
 
+export type MemoryEntry = { name: string; description: string; type: string; content: string }
+
 export type RpcOutput = { output?: any }
 
 export type PermissionReply = "once" | "always" | "reject"
@@ -743,6 +745,8 @@ export type PermissionSavedInfo = {
   resource: string
   time: { created: number; updated: number }
 }
+
+export type MemoryInfo = { directory: string; entries: Array<MemoryEntry> }
 
 export type Pty = {
   id: PtyID
@@ -5571,6 +5575,19 @@ export type SkillListInput = {
 }
 
 export type SkillListOutput = { location: LocationPublicRef; data: Array<SkillInfo> }
+
+export type MemoryListInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type MemoryListOutput = { location: LocationPublicRef; data: MemoryInfo }
+
+export type MemoryRemoveInput = {
+  readonly name: { readonly name: string }["name"]
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type MemoryRemoveOutput = void
 
 export type RpcCallInput = {
   readonly rpcID: { readonly rpcID: string; readonly method: string }["rpcID"]

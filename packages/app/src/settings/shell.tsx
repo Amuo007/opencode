@@ -570,7 +570,13 @@ function ProjectSettings(props: { server: ServerConnection.Any; project: LocalPr
             <SettingsWorkspaces projectID={props.project.id} activeDirectory={activeDirectory()} />
           </Tabs.Content>
           <Tabs.Content value="extensions" class="settings-panel">
-            <ProjectSettingsExtensions subtab={surface.view().subtab} onSubtab={(value) => surface.subtab(value)} />
+            <ProjectSettingsExtensions
+              subtab={(() => {
+                const value = surface.view().subtab
+                return value === "memory" ? undefined : value
+              })()}
+              onSubtab={(value) => surface.subtab(value)}
+            />
           </Tabs.Content>
         </SettingsNavigation>
       </LocationProvider>

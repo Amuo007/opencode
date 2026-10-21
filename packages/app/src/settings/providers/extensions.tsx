@@ -13,6 +13,7 @@ import { pluginLabels } from "@/providers/catalog/plugin"
 import { ExternalLink } from "@/runtime/platform/external-link"
 import { SettingsList } from "@/settings/list"
 import { DialogAddMcpServer } from "@/settings/providers/mcp-dialog"
+import { SettingsMemories } from "@/settings/providers/memory"
 import { showToast } from "@/shell/notifications/toast"
 import type { SettingsView } from "@/settings/surface"
 import "@/settings/settings.css"
@@ -114,7 +115,7 @@ export const SettingsExtensions: Component<{
           variant="pill"
           value={props.subtab ?? "mcps"}
           onChange={(value) => {
-            if (value === "mcps" || value === "plugins" || value === "skills") props.onSubtab(value)
+            if (value === "mcps" || value === "plugins" || value === "skills" || value === "memory") props.onSubtab(value)
           }}
           class="settings-extensions-tabs settings-subtabs"
         >
@@ -122,6 +123,7 @@ export const SettingsExtensions: Component<{
             <Tabs.Trigger value="mcps">{language.t("settings.extensions.tab.mcps")}</Tabs.Trigger>
             <Tabs.Trigger value="plugins">{language.t("settings.extensions.tab.plugins")}</Tabs.Trigger>
             <Tabs.Trigger value="skills">{language.t("settings.extensions.tab.skills")}</Tabs.Trigger>
+            <Tabs.Trigger value="memory">{language.t("settings.extensions.tab.memory")}</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content value="mcps">
@@ -209,6 +211,10 @@ export const SettingsExtensions: Component<{
                 </For>
               </SettingsList>
             </div>
+          </Tabs.Content>
+
+          <Tabs.Content value="memory">
+            <SettingsMemories />
           </Tabs.Content>
         </Tabs>
       </div>

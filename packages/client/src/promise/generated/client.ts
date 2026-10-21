@@ -194,6 +194,10 @@ import type {
   CommandListOutput,
   SkillListInput,
   SkillListOutput,
+  MemoryListInput,
+  MemoryListOutput,
+  MemoryRemoveInput,
+  MemoryRemoveOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1726,6 +1730,32 @@ export function make(options: ClientOptions) {
             successStatus: 200,
             declaredStatuses: [400, 401, 404],
             empty: false,
+          },
+          requestOptions,
+        ),
+    },
+    memory: {
+      list: (input?: MemoryListInput, requestOptions?: RequestOptions) =>
+        request<MemoryListOutput>(
+          {
+            method: "GET",
+            path: `/api/experimental/memory`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      remove: (input: MemoryRemoveInput, requestOptions?: RequestOptions) =>
+        request<MemoryRemoveOutput>(
+          {
+            method: "DELETE",
+            path: `/api/experimental/memory/${encodeURIComponent(input.name)}`,
+            query: { location: input["location"] },
+            successStatus: 204,
+            declaredStatuses: [400, 401, 404],
+            empty: true,
           },
           requestOptions,
         ),

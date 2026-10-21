@@ -196,6 +196,10 @@ import type {
   CommandListOutput,
   SkillListInput,
   SkillListOutput,
+  MemoryListInput,
+  MemoryListOutput,
+  MemoryRemoveInput,
+  MemoryRemoveOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1265,6 +1269,23 @@ const EndpointSkillList = (raw: RawClient["server.skill"]) => (input?: SkillList
 
 const adaptGroupSkill = (raw: RawClient["server.skill"]) => ({ list: EndpointSkillList(raw) })
 
+const EndpointMemoryList = (raw: RawClient["server.memory"]) => (input?: MemoryListInput) =>
+  preserveEffect<MemoryListOutput>()(
+    raw["memory.list"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointMemoryRemove = (raw: RawClient["server.memory"]) => (input: MemoryRemoveInput) =>
+  preserveEffect<MemoryRemoveOutput>()(
+    raw["memory.remove"]({ params: { name: input["name"] }, query: { location: input["location"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
+const adaptGroupMemory = (raw: RawClient["server.memory"]) => ({
+  list: EndpointMemoryList(raw),
+  remove: EndpointMemoryRemove(raw),
+})
+
 const EndpointRpcCall = (raw: RawClient["server.rpc"]) => (input: RpcCallInput) =>
   preserveEffect<RpcCallOutput>()(
     raw["rpc.call"]({
@@ -1666,6 +1687,7 @@ const adaptClient = (raw: RawClient) => ({
   file: adaptGroupFile(raw["server.fs"]),
   command: adaptGroupCommand(raw["server.command"]),
   skill: adaptGroupSkill(raw["server.skill"]),
+  memory: adaptGroupMemory(raw["server.memory"]),
   rpc: adaptGroupRpc(raw["server.rpc"]),
   event: adaptGroupEvent(raw["server.event"]),
   pty: adaptGroupPty(raw["server.pty"]),

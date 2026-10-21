@@ -1839,6 +1839,33 @@ export interface SkillApi<E = never> {
   readonly list: SkillListOperation<E>
 }
 
+export type MemoryListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type MemoryListOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly directory: string
+    readonly entries: ReadonlyArray<{
+      readonly name: string
+      readonly description: string
+      readonly type: string
+      readonly content: string
+    }>
+  }
+}
+export type MemoryListOperation<E = never> = (input?: MemoryListInput) => Effect.Effect<MemoryListOutput, E>
+
+export type MemoryRemoveInput = {
+  readonly name: string
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type MemoryRemoveOutput = void
+export type MemoryRemoveOperation<E = never> = (input: MemoryRemoveInput) => Effect.Effect<MemoryRemoveOutput, E>
+
+export interface MemoryApi<E = never> {
+  readonly list: MemoryListOperation<E>
+  readonly remove: MemoryRemoveOperation<E>
+}
+
 export type RpcCallInput = {
   readonly rpcID: string
   readonly method: string
@@ -2335,6 +2362,7 @@ export interface AppApi<E = never> {
   readonly file: FileApi<E>
   readonly command: CommandApi<E>
   readonly skill: SkillApi<E>
+  readonly memory: MemoryApi<E>
   readonly rpc: RpcApi<E>
   readonly event: EventApi<E>
   readonly pty: PtyApi<E>

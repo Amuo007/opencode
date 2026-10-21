@@ -33,3 +33,15 @@ describe("MemoryTools", () => {
     expect(MemoryTools.instructions("/m", "")).toContain("(empty - nothing saved yet)")
   })
 })
+
+describe("MemoryTools files", () => {
+  test("parses frontmatter and plain files", () => {
+    expect(MemoryTools.parse("x", MemoryTools.format({ name: "a", description: "b", type: "user", content: "c" }))).toEqual({
+      name: "a",
+      description: "b",
+      type: "user",
+      content: "c",
+    })
+    expect(MemoryTools.parse("plain", "just text")).toEqual({ name: "plain", description: "", type: "", content: "just text" })
+  })
+})

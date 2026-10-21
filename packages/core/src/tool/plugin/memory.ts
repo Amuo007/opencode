@@ -6,7 +6,7 @@ import { SystemPart, ToolFailure } from "@opencode/ai"
 import { Tool } from "@opencode/schema/tool"
 import { Global } from "@opencode/util/global"
 import { Effect, Schema } from "effect"
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { Permission } from "../../permission.js"
 
@@ -28,6 +28,37 @@ export const slug = (name: string) =>
 
 // Matches how the project directory is named under the memory root, e.g. /a/b c -> -a-b-c.
 export const projectKey = (directory: string) => directory.replace(/[^A-Za-z0-9]+/g, "-")
+
+export const directoryFor = (data: string, project: string) => path.join(data, "memory", projectKey(project))
+
+/** Reads a memory file written by format(), tolerating hand-edited files without frontmatter. */
+export function parse(name: string, text: string) {
+  const match = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+  const field = (key: string) => match?.[1].match(new RegExp(`^\\s*${key}:\\s*(.*)$`, "m"))?.[1]?.trim() ?? ""
+  return {
+    name: field("name") || name,
+    description: field("description"),
+    type: field("type"),
+    content: (match ? match[2] : text).trim(),
+  }
+}
+
+export async function list(directory: string) {
+  const files = await readdir(directory).catch(() => [] as string[])
+  const entries = await Promise.all(
+    files
+      .filter((file) => file.endsWith(".md") && file !== INDEX)
+      .map(async (file) => parse(file.slice(0, -3), await readFile(path.join(directory, file), "utf8"))),
+  )
+  return entries.toSorted((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function remove(directory: string, name: string) {
+  const index = path.join(directory, INDEX)
+  await rm(path.join(directory, `${name}.md`), { force: true })
+  const current = await readFile(index, "utf8").catch(() => undefined)
+  if (current !== undefined) await writeFile(index, removeFromIndex(current, name))
+}
 
 export const format = (input: { name: string; description: string; type: string; content: string }) =>
   `---\nname: ${input.name}\ndescription: ${input.description.replace(/\n/g, " ")}\nmetadata:\n  type: ${input.type}\n---\n\n${input.content.trim()}\n`
@@ -70,7 +101,7 @@ export const Plugin = {
   effect: Effect.fn("MemoryTools.Plugin")(function* (ctx: Context) {
     const permission = yield* Permission.Service
     const global = yield* Global.Service
-    const directory = path.join(global.data, "memory", projectKey(ctx.location.project.directory))
+    const directory = directoryFor(global.data, ctx.location.project.directory)
     const indexFile = path.join(directory, INDEX)
     const readIndex = () => readFile(indexFile, "utf8").catch(() => "")
 
@@ -169,10 +200,7 @@ export const Plugin = {
             Effect.gen(function* () {
               const name = slug(input.name)
               yield* allow(context, name, {})
-              yield* io("Could not delete the memory", async () => {
-                await rm(path.join(directory, `${name}.md`), { force: true })
-                await writeFile(indexFile, removeFromIndex(await readIndex(), name))
-              })
+              yield* io("Could not delete the memory", () => remove(directory, name))
               const output = `Deleted memory "${name}".`
               return { output: { output }, content: output }
             }),
