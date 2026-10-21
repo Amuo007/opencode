@@ -50,6 +50,7 @@ On macOS, the `screenshot` tool needs Screen Recording permission for the app th
 | `shell_stop` | Stops a background command (dev server, watcher) by the shell ID `shell` returned with `background: true`, or lists the session's running background commands. |
 | `notify` | Desktop notification (macOS, Linux, Windows) when a long task finishes or needs you. |
 | `goal_complete` + `/goal` | `/goal <condition>` makes the agent keep working, turn after turn, until it calls `goal_complete` with evidence (max 25 rounds). `/goal stop` ends it. |
+| `todowrite` | On by default (upstream keeps it experimental). The agent keeps a checklist for multi-step work; the web app shows it above the composer (*Tasks 2/5*), with the item in progress highlighted, until your next message after it is finished. Click the header to collapse it. Off in **Settings → Extensions → Tools** or with `"experimental": { "todo": false }`. |
 
 ## Built-in skills
 
@@ -122,7 +123,8 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
   { "permission": { "*": "allow", "chrome": "deny", "memory": "deny" } }
   ```
 
-  Names: `chrome` (browser tools), `memory`, `terminal`, `screenshot`, `lsp`, `notify`, `websearch`, `webfetch`.
+  Names: `chrome` (browser tools), `memory`, `terminal`, `screenshot`, `lsp`, `notify`, `todowrite`, `websearch`,
+  `webfetch`.
 
 - OpenCode 1.x reads the same global config files. The Settings switches use the 1.x `permission` form because
   1.x refuses to start when the file has the newer `"permissions"` list. Turning `websearch` or `webfetch` off
