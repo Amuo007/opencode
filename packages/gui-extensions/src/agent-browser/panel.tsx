@@ -176,6 +176,15 @@ export default function AgentBrowserPanel(props: { session: MountedSession; t: (
             <span class="size-1.5 rounded-full bg-[#3fb950]" classList={{ "opacity-40": busy() }} />
             {props.t("live")}
           </span>
+          <IconButton
+            type="button"
+            variant="ghost"
+            icon={<Icon name="outline-arrow-up-right" />}
+            aria-label={props.t("external")}
+            title={props.t("external")}
+            disabled={!/^https?:/.test(view()?.url ?? "")}
+            onClick={() => window.open(view()?.url, "_blank", "noopener")}
+          />
         </Show>
       </form>
       <Show when={error()}>

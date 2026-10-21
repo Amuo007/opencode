@@ -10,5 +10,6 @@ export default {
   forward: "Forward",
   reload: "Reload",
   live: "Live",
+  external: "Open in a new browser tab",
   "screen.label": "Agent browser page. Click to interact, scroll to scroll, type while focused.",
 }
