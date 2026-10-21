@@ -69,8 +69,18 @@ function repair(value: unknown, schema: JsonSchema.JsonSchema, root: JsonSchema.
     if (Array.isArray(schema.anyOf) && Array.isArray(schema.oneOf)) return value
     const branches = Array.isArray(schema.anyOf) ? schema.anyOf : schema.oneOf
     if (!Array.isArray(branches) || value === null) return value
-    if (branches.some((branch) => !Predicate.isObject(branch) || branch.type === typeof value)) return value
-    const candidates = branches.filter((branch) => Predicate.isObject(branch) && branch.type !== "null")
+    // A branch of the value's type that enumerates other values does not accept it, e.g. Effect's
+    // Schema.Number is { anyOf: [{ type: "number" }, { type: "string", enum: ["Infinity", "-Infinity", "NaN"] }] }.
+    const rejects = (branch: unknown) =>
+      Predicate.isObject(branch) &&
+      branch.type === typeof value &&
+      Array.isArray(branch.enum) &&
+      !branch.enum.includes(value)
+    if (branches.some((branch) => !Predicate.isObject(branch) || (branch.type === typeof value && !rejects(branch))))
+      return value
+    const candidates = branches.filter(
+      (branch) => Predicate.isObject(branch) && branch.type !== "null" && !rejects(branch),
+    )
     return candidates.length === 1 ? repair(value, candidates[0], root, depth + 1) : value
   }
 

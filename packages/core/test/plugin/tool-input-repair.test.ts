@@ -361,6 +361,17 @@ describe("tool input repair plugin", () => {
     }),
   )
 
+  it.effect("coerces numeric strings for Effect's Schema.Number but keeps its special values", () =>
+    Effect.gen(function* () {
+      const number = { anyOf: [{ type: "number" }, { type: "string", enum: ["Infinity", "-Infinity", "NaN"] }] }
+      const event = yield* run(
+        { x: "210", y: "-4.5", special: "Infinity", word: "wide" },
+        object({ x: number, y: number, special: number, word: number }),
+      )
+      expect(event.input).toEqual({ x: 210, y: -4.5, special: "Infinity", word: "wide" })
+    }),
+  )
+
   it.effect("repairs tuple positions and rest items while preserving valid array identity", () =>
     Effect.gen(function* () {
       const valid = [2, false]
