@@ -1,6 +1,7 @@
 export default {
   "tab.title": "Context",
   "command.open": "Show context usage",
+  "command.description": "Context window usage, tokens, cost and speed",
   "command.category": "Session",
   "mobile.title": "Usage",
   "usage.tokens": "Tokens",

@@ -56,6 +56,7 @@ const setup: Setup<typeof AgentBrowser> = (ctx) => {
     (): Command => ({
       id: "open",
       title: ctx.t("command.open"),
+      description: ctx.t("command.description"),
       group: ctx.t("command.category"),
       section: "navigation",
       slash: { name: "browser" },

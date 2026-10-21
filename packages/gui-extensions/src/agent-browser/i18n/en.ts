@@ -1,6 +1,7 @@
 export default {
   "tab.title": "Agent browser",
   "command.open": "Open agent browser",
+  "command.description": "Show the agent's browser and use it together",
   "command.category": "View",
   "address.placeholder": "URL or local server, e.g. localhost:3000",
   "empty.title": "The agent's browser is closed",

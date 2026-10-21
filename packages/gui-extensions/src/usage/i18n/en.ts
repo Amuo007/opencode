@@ -2,6 +2,7 @@ export default {
   title: "Usage",
   description: "Tokens, cost and activity across your sessions on this server",
   "command.open": "Show usage",
+  "command.description": "Tokens, cost and activity across your sessions",
   "command.category": "View",
   "range.today": "Today",
   "range.week": "7 days",
