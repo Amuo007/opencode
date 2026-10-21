@@ -4,7 +4,7 @@ import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Menu } from "@opencode/ui/menu"
 import { TextShimmer } from "@opencode/ui/text-shimmer"
-import { createEffect, createMemo, createUniqueId, For, on, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, createUniqueId, For, on, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createAnimatedPresence } from "@/runtime/animated-presence"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -16,6 +16,32 @@ import { showToast } from "@/shell/notifications/toast"
 import { SessionWorkingIndicator } from "./session-working-indicator"
 
 const neutral = "light-dark(var(--v2-text-text-base), #ffffff)"
+
+// A background shell stays listed until its completion notice reaches the history. A server that restarted
+// without recovering background work never sends one, so stopping a shell the server no longer knows clears it.
+const CLEARED_KEY = "opencode:cleared-shells"
+const MAX_CLEARED = 200
+
+const [cleared, setCleared] = createSignal<ReadonlySet<string>>(
+  (() => {
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem(CLEARED_KEY) ?? "[]")
+      return new Set(Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [])
+    } catch {
+      return new Set<string>()
+    }
+  })(),
+)
+
+const clear = (id: string) => {
+  const next = [...cleared(), id].slice(-MAX_CLEARED)
+  setCleared(new Set(next))
+  try {
+    localStorage.setItem(CLEARED_KEY, JSON.stringify(next))
+  } catch {
+    // Without storage the shell stays cleared until the page reloads.
+  }
+}
 
 type RunningItem = {
   key: string
@@ -69,7 +95,9 @@ export function SessionRunningMenu(props: {
         ? [{ ...task, key: task.id, agent: task.agent ?? sessionAgent(task.id), sessionID: task.id, target: task.id }]
         : [],
     ),
-    ...props.tasks.flatMap((task) => (task.type === "shell" ? [{ ...task, key: task.id, target: task.id }] : [])),
+    ...props.tasks.flatMap((task) =>
+      task.type === "shell" && !cleared().has(task.id) ? [{ ...task, key: task.id, target: task.id }] : [],
+    ),
   ])
 
   const viewing = (item: RunningItem) => !!item.sessionID && item.sessionID === props.sessionID
@@ -137,12 +165,16 @@ export function SessionRunningMenu(props: {
           location: { directory: server.ctx.data.shell.get(item.target)?.location.directory },
         })
 
-    void request.catch((error) =>
-      showToast({
-        title: language.t("common.requestFailed"),
-        description: errorMessage(error, language.t("common.requestFailed")),
-      }),
-    )
+    void request
+      .then(() => {
+        if (item.type === "shell" && !server.ctx.data.shell.get(item.target)) clear(item.target)
+      })
+      .catch((error) =>
+        showToast({
+          title: language.t("common.requestFailed"),
+          description: errorMessage(error, language.t("common.requestFailed")),
+        }),
+      )
   }
 
   return (
