@@ -56,9 +56,9 @@ export function SettingsTools() {
 
   return (
     <div class="settings-section">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-0.5">
         <span class="settings-extension-heading text-13-medium">{language.t("settings.extensions.tools.title")}</span>
-        <span class="text-13-regular text-v2-text-text-muted">{language.t("settings.extensions.tools.hint")}</span>
+        <span class="text-12-regular text-v2-text-text-muted">{language.t("settings.extensions.tools.hint")}</span>
       </div>
       <SettingsList variant="catalog">
         <For each={GROUPS}>

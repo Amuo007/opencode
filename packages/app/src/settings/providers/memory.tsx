@@ -172,10 +172,14 @@ export function SettingsMemories() {
 
   return (
     <div class="settings-section">
-      <div class="flex items-center justify-between">
-        <span class="settings-extension-heading text-13-medium">{language.t("settings.extensions.memory.title")}</span>
-        <div class="flex items-center gap-3">
-          <span class="text-13-regular text-v2-text-text-muted">{language.t("settings.extensions.memory.hint")}</span>
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <span class="settings-extension-heading text-13-medium">
+            {language.t("settings.extensions.memory.title")}
+          </span>
+          <span class="text-12-regular text-v2-text-text-muted">{language.t("settings.extensions.memory.hint")}</span>
+        </div>
+        <div class="flex shrink-0 items-center">
           <Button
             type="button"
             size="small"
