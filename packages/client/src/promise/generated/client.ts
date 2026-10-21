@@ -2304,7 +2304,12 @@ export function make(options: ClientOptions) {
           {
             method: "PATCH",
             path: `/api/experimental/config`,
-            body: { shell: input?.["shell"], provider: input?.["provider"], mcp: input?.["mcp"] },
+            body: {
+              shell: input?.["shell"],
+              websearch: input?.["websearch"],
+              provider: input?.["provider"],
+              mcp: input?.["mcp"],
+            },
             successStatus: 204,
             declaredStatuses: [400, 401, 404],
             empty: true,

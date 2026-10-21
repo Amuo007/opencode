@@ -128,6 +128,9 @@ export interface CustomProvider extends Schema.Schema.Type<typeof CustomProvider
 
 export const Patch = Schema.Struct({
   shell: Schema.NullOr(Schema.String).pipe(optional),
+  websearch: Schema.NullOr(ConfigWebSearch.Selection).pipe(optional).annotate({
+    description: "Web search provider selection; null returns to automatic selection",
+  }),
   provider: Schema.Record(Schema.String, Schema.NullOr(CustomProvider)).pipe(optional).annotate({
     description: "OpenAI-compatible providers to save by ID in the global configuration; null removes the provider",
   }),

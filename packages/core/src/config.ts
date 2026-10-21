@@ -7,6 +7,7 @@ import { applyEdits, modify, type ParseError, parse } from "jsonc-parser"
 import { Context, Effect, FiberMap, Layer, Option, PubSub, Ref, Schema, Semaphore, Stream } from "effect"
 import { Directory, Document, Info, type Patch, type Entry, Event } from "@opencode/schema/config"
 import { ConfigMCP } from "@opencode/schema/config/mcp"
+import { ConfigWebSearch } from "@opencode/schema/config/websearch"
 import { Credential } from "./credential.js"
 import { Bus } from "./bus.js"
 import { Watcher } from "./filesystem/watcher.js"
@@ -389,6 +390,14 @@ export const layer = (options?: Options) =>
           const text = (yield* fs.readFileStringSafe(filepath)) ?? "{}\n"
           const edits: Array<[string[], unknown]> = [
             ...(patch.shell === undefined ? [] : [[["shell"], patch.shell ?? undefined] as [string[], unknown]]),
+            ...(patch.websearch === undefined
+              ? []
+              : [
+                  [
+                    ["websearch"],
+                    patch.websearch === null ? undefined : Schema.encodeSync(ConfigWebSearch.Selection)(patch.websearch),
+                  ] as [string[], unknown],
+                ]),
             ...Object.entries(patch.mcp ?? {}).flatMap(([name, server]): Array<[string[], unknown]> =>
               server === null
                 ? [

@@ -2330,6 +2330,7 @@ export type ConfigShellsOperation<E = never> = () => Effect.Effect<ConfigShellsO
 
 export type ConfigUpdateInput = {
   readonly shell?: string | null | undefined
+  readonly websearch?: false | { readonly provider: "random" | WebSearch.ID } | null | undefined
   readonly provider?: { readonly [x: string]: Config.CustomProvider | null } | undefined
   readonly mcp?: { readonly [x: string]: Mcp.LocalConfig | Mcp.RemoteConfig | null } | undefined
 }

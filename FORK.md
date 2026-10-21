@@ -71,6 +71,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
 - **Settings → Extensions → Memory**: every project's saved memories with type, description and content, and a delete button.
 - **Settings → Providers → Custom OpenAI-compatible provider**: now saves (base URL, API key, headers, models), so local servers can be added from the UI.
+- **Settings → Server → Web search**: choose Automatic, a specific provider (Built-in, Brave, Exa, Tavily, ...) or Off.
 - **Context panel**: *Output Speed (last / average)* in tokens per second next to context usage, tokens and cost.
 - Browser, memory, notebook and plan tools have readable titles in the web UI and terminal.
 

@@ -6040,6 +6040,7 @@ export type ConfigShellsOutput = Array<ConfigShellOption>
 export type ConfigUpdateInput = {
   readonly shell?: {
     readonly shell?: string | null
+    readonly websearch?: false | { readonly provider: "random" | string } | null
     readonly provider?: {
       readonly [x: string]: {
         readonly npm: string
@@ -6087,8 +6088,59 @@ export type ConfigUpdateInput = {
         | null
     }
   }["shell"]
+  readonly websearch?: {
+    readonly shell?: string | null
+    readonly websearch?: false | { readonly provider: "random" | string } | null
+    readonly provider?: {
+      readonly [x: string]: {
+        readonly npm: string
+        readonly name: string
+        readonly env?: ReadonlyArray<string>
+        readonly options: {
+          readonly baseURL: string
+          readonly apiKey?: string
+          readonly headers?: { readonly [x: string]: string }
+        }
+        readonly models: { readonly [x: string]: { readonly name?: string } }
+      } | null
+    }
+    readonly mcp?: {
+      readonly [x: string]:
+        | {
+            readonly type: "local"
+            readonly command: ReadonlyArray<string>
+            readonly cwd?: string
+            readonly environment?: { readonly [x: string]: string }
+            readonly disabled?: boolean
+            readonly codemode?: boolean
+            readonly timeout?: { readonly startup?: number; readonly catalog?: number; readonly execution?: number }
+            readonly protocol?: "legacy" | "auto" | "2026-07-28"
+          }
+        | {
+            readonly type: "remote"
+            readonly url: string
+            readonly headers?: { readonly [x: string]: string }
+            readonly oauth?:
+              | {
+                  readonly client_id?: string
+                  readonly client_secret?: string
+                  readonly scope?: string
+                  readonly callback_port?: number
+                  readonly redirect_uri?: string
+                  readonly auth_server_metadata_url?: string
+                }
+              | false
+            readonly disabled?: boolean
+            readonly codemode?: boolean
+            readonly timeout?: { readonly startup?: number; readonly catalog?: number; readonly execution?: number }
+            readonly protocol?: "legacy" | "auto" | "2026-07-28"
+          }
+        | null
+    }
+  }["websearch"]
   readonly provider?: {
     readonly shell?: string | null
+    readonly websearch?: false | { readonly provider: "random" | string } | null
     readonly provider?: {
       readonly [x: string]: {
         readonly npm: string
@@ -6138,6 +6190,7 @@ export type ConfigUpdateInput = {
   }["provider"]
   readonly mcp?: {
     readonly shell?: string | null
+    readonly websearch?: false | { readonly provider: "random" | string } | null
     readonly provider?: {
       readonly [x: string]: {
         readonly npm: string
