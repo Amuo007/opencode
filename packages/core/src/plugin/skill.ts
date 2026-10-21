@@ -11,6 +11,10 @@ import { Config } from "../config.js"
 import os from "os"
 import opencodeContent from "./skill/opencode.md" with { type: "text" }
 import reportContent from "./skill/report.md" with { type: "text" }
+import webappTestingContent from "./skill/webapp-testing.md" with { type: "text" }
+import frontendDesignContent from "./skill/frontend-design.md" with { type: "text" }
+import debuggingContent from "./skill/debugging.md" with { type: "text" }
+import gitWorkflowContent from "./skill/git-workflow.md" with { type: "text" }
 
 export const OpencodeContent = opencodeContent
 export const ReportContent = reportContent
@@ -33,6 +37,47 @@ export const Plugin = define({
           path: AbsolutePath.make("/builtin/opencode.md"),
           content: OpencodeContent,
         }),
+      )
+      const builtins = [
+        {
+          id: "webapp-testing",
+          name: "Web app testing",
+          description:
+            "Use when building or changing a web app, website or frontend: start the dev server, test it like a user with the chrome tools (open, snapshot, click, type, screenshot, console) and fix what fails.",
+          content: webappTestingContent,
+        },
+        {
+          id: "frontend-design",
+          name: "Frontend design",
+          description:
+            "Use when creating or restyling a user interface, page or component: a design system for type, spacing and color, interaction states, responsiveness and accessibility, verified with screenshots.",
+          content: frontendDesignContent,
+        },
+        {
+          id: "debugging",
+          name: "Debugging",
+          description:
+            "Use when fixing a bug, a failing test or an error: reproduce, locate with lsp and grep, verify the root cause, fix it, and prove the fix with a test.",
+          content: debuggingContent,
+        },
+        {
+          id: "git-workflow",
+          name: "Git workflow",
+          description:
+            "Use when committing, branching, pushing, opening pull requests or resolving conflicts: safe git habits and commit message conventions.",
+          content: gitWorkflowContent,
+        },
+      ]
+      builtins.forEach((skill) =>
+        editor.add(
+          Skill.Info.make({
+            id: Skill.ID.make(skill.id),
+            name: Skill.Name.make(skill.name),
+            description: skill.description,
+            path: AbsolutePath.make(`/builtin/${skill.id}.md`),
+            content: skill.content,
+          }),
+        ),
       )
       editor.add(
         Skill.Info.make({

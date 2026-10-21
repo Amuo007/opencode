@@ -29,6 +29,15 @@ Or run from source with `bun run dev` in the repo root. It reads your normal `~/
 | `notify` | Desktop notification (macOS, Linux, Windows) when a long task finishes or needs you. |
 | `goal_complete` + `/goal` | `/goal <condition>` makes the agent keep working, turn after turn, until it calls `goal_complete` with evidence (max 25 rounds). `/goal stop` ends it. |
 
+## Built-in skills
+
+The agent loads these on its own when a task matches (or ask for one by name):
+
+- **webapp-testing**: start the dev server, test the app like a user with the chrome tools, fix what fails
+- **frontend-design**: a small design system, interaction states, responsiveness and accessibility, checked with screenshots
+- **debugging**: reproduce, locate with `lsp` and `grep`, verify the root cause, fix, prove with a test
+- **git-workflow**: safe git habits, commit conventions, pull requests
+
 ## Hooks
 
 Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.opencode/hooks.json`:
