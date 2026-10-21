@@ -113,8 +113,23 @@ export class Info extends Schema.Class<Info>("Config.Info")({
   experimental: ConfigExperimental.Info.pipe(optional),
 }) {}
 
+export const CustomProvider = Schema.Struct({
+  npm: Schema.String,
+  name: Schema.String,
+  env: Schema.Array(Schema.String).pipe(optional),
+  options: Schema.Struct({
+    baseURL: Schema.String,
+    apiKey: Schema.String.pipe(optional),
+    headers: Schema.Record(Schema.String, Schema.String).pipe(optional),
+  }),
+  models: Schema.Record(Schema.String, Schema.Struct({ name: Schema.String.pipe(optional) })),
+}).annotate({ identifier: "Config.CustomProvider" })
+
 export const Patch = Schema.Struct({
   shell: Schema.NullOr(Schema.String).pipe(optional),
+  provider: Schema.Record(Schema.String, Schema.NullOr(CustomProvider)).pipe(optional).annotate({
+    description: "OpenAI-compatible providers to save by ID in the global configuration; null removes the provider",
+  }),
   mcp: Schema.Record(Schema.String, Schema.NullOr(ConfigMCP.Server)).pipe(optional).annotate({
     description: "MCP servers to save by name in the global configuration; null removes the server",
   }),

@@ -1635,9 +1635,9 @@ const EndpointConfigShells = (raw: RawClient["server.config"]) => () =>
 
 const EndpointConfigUpdate = (raw: RawClient["server.config"]) => (input?: ConfigUpdateInput) =>
   preserveEffect<ConfigUpdateOutput>()(
-    raw["config.update"]({ payload: { shell: input?.["shell"], mcp: input?.["mcp"] } }).pipe(
-      Effect.mapError(mapClientError),
-    ),
+    raw["config.update"]({
+      payload: { shell: input?.["shell"], provider: input?.["provider"], mcp: input?.["mcp"] },
+    }).pipe(Effect.mapError(mapClientError)),
   )
 
 const adaptGroupConfig = (raw: RawClient["server.config"]) => ({

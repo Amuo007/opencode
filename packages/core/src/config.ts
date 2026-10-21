@@ -397,6 +397,14 @@ export const layer = (options?: Options) =>
                   ]
                 : [[["mcp", "servers", name], Schema.encodeSync(ConfigMCP.Server)(server)]],
             ),
+            ...Object.entries(patch.provider ?? {}).flatMap(([id, provider]): Array<[string[], unknown]> =>
+              provider === null
+                ? [
+                    [["provider", id], undefined],
+                    [["providers", id], undefined],
+                  ]
+                : [[["provider", id], provider]],
+            ),
           ]
           const updated = yield* Effect.try({
             try: () =>
