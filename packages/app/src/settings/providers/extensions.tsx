@@ -266,6 +266,23 @@ export const SettingsExtensions: Component<{
                       <Show when={skillRoot() && skill.path.startsWith(skillRoot() + "/")}>
                         <IconButton
                           type="button"
+                          icon={<Icon name="edit" />}
+                          variant="ghost"
+                          aria-label={language.t("settings.extensions.skill.editLabel", { name: skill.name })}
+                          onClick={() =>
+                            dialog.show(() => (
+                              <DialogNewSkill
+                                skill={{
+                                  name: skill.path.slice((skillRoot() ?? "").length + 1).split("/")[0],
+                                  description: skill.description,
+                                  content: skill.content,
+                                }}
+                              />
+                            ))
+                          }
+                        />
+                        <IconButton
+                          type="button"
                           icon={<Icon name="trash" />}
                           variant="ghost"
                           aria-label={language.t("settings.extensions.skill.remove", { name: skill.name })}

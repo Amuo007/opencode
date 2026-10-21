@@ -8,13 +8,14 @@ import { useServerSDK } from "@/runtime/server/client"
 import { showToast } from "@/shell/notifications/toast"
 
 /** Writes a new skill to the global skills folder; the server picks it up without a restart. */
-export function DialogNewSkill() {
+export function DialogNewSkill(props: { skill?: { name: string; description?: string; content: string } }) {
   const dialog = useDialog()
   const language = useLanguage()
   const serverSdk = useServerSDK()
-  const [name, setName] = createSignal("")
-  const [description, setDescription] = createSignal("")
-  const [content, setContent] = createSignal("")
+  // Editing keeps the skill's folder name, so saving replaces it.
+  const [name, setName] = createSignal(props.skill?.name ?? "")
+  const [description, setDescription] = createSignal(props.skill?.description ?? "")
+  const [content, setContent] = createSignal(props.skill?.content.trim() ?? "")
   const [saving, setSaving] = createSignal(false)
 
   const ready = () => !!name().trim() && !!description().trim() && !!content().trim()
@@ -45,13 +46,16 @@ export function DialogNewSkill() {
     <Dialog fit>
       <DialogHeader>
         <DialogTitleGroup
-          title={language.t("settings.extensions.skill.new.title")}
+          title={language.t(
+            props.skill ? "settings.extensions.skill.edit.title" : "settings.extensions.skill.new.title",
+          )}
           description={language.t("settings.extensions.skill.new.description")}
         />
       </DialogHeader>
       <form onSubmit={save} class="flex flex-col gap-4 px-5 pb-2 min-w-[min(440px,90vw)]">
         <TextField
           autofocus
+          disabled={!!props.skill}
           label={language.t("settings.extensions.skill.name")}
           placeholder="release-checklist"
           value={name()}
@@ -76,7 +80,7 @@ export function DialogNewSkill() {
             {language.t("common.cancel")}
           </Button>
           <Button type="submit" variant="submit" disabled={saving() || !ready()}>
-            {language.t("settings.extensions.skill.save")}
+            {language.t(props.skill ? "settings.extensions.skill.update" : "settings.extensions.skill.save")}
           </Button>
         </DialogFooter>
       </form>
