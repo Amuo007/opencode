@@ -35,40 +35,6 @@ function required<T>(value: T | undefined): T {
 const decode = Schema.decodeUnknownSync(Info)
 
 describe("ConfigProviderPlugin.Plugin", () => {
-  it.effect("defaults to a model listed under the user's own provider when no model is configured", () =>
-    Effect.gen(function* () {
-      const models = yield* Model.Service
-      yield* addPlugin([
-        new Document({
-          type: "document",
-          info: decode({
-            providers: {
-              opencode: { models: { "big-pickle": {} } },
-              local: { package: "@opencode/ai/providers/openai/chat", models: { qwen: {}, other: {} } },
-            },
-          }),
-        }),
-      ])
-      expect(yield* models.default()).toMatchObject({ providerID: "local", id: "qwen" })
-    }),
-  )
-
-  it.effect("keeps the configured model as the default", () =>
-    Effect.gen(function* () {
-      const models = yield* Model.Service
-      yield* addPlugin([
-        new Document({
-          type: "document",
-          info: decode({
-            model: "local/other",
-            providers: { local: { package: "@opencode/ai/providers/openai/chat", models: { qwen: {}, other: {} } } },
-          }),
-        }),
-      ])
-      expect(yield* models.default()).toMatchObject({ providerID: "local", id: "other" })
-    }),
-  )
-
   it.effect("inherits the provider compaction setting with model overrides and rejects unsupported routes", () =>
     Effect.gen(function* () {
       const models = yield* Model.Service

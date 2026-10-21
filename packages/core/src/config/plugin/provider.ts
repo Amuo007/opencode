@@ -107,16 +107,6 @@ export const Plugin = define({
     yield* ctx.model.transform((models) => {
       const configuredDefault = sources.defaultModel
       if (configuredDefault !== undefined) models.default.set(configuredDefault.providerID, configuredDefault.model)
-      // Without a configured model, one the user listed under their own provider (a local server, say) is a better
-      // first choice than the first available model, which is usually OpenCode's free tier.
-      else if (models.default.get() === undefined) {
-        const listed = [...sources.models.values()].flatMap((definition) =>
-          definition.providerID === Provider.ID.opencode
-            ? []
-            : [...definition.models.keys()].map((id) => ({ providerID: definition.providerID, id })),
-        )[0]
-        if (listed) models.default.set(Provider.ID.make(listed.providerID), Model.ID.make(listed.id))
-      }
       for (const [item, definition] of sources.models) {
         const providerID = definition.providerID
         for (const [id, config] of Object.entries(item.models ?? {})) {
