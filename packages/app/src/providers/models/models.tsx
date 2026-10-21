@@ -17,6 +17,13 @@ function modelKey(model: ModelKey) {
   return `${model.providerID}:${model.modelID}`
 }
 
+// Models defined in config have no release date and the server reports 0, which is "unknown", not 1970.
+export const releaseTime = (date: string) => {
+  const time = Date.parse(date)
+
+  return time > 0 ? time : NaN
+}
+
 export const isFreeModel = (model: { provider: { id: string }; cost?: { input: number } }) =>
   model.provider.id === "opencode" && (!model.cost || model.cost.input === 0)
 
@@ -40,7 +47,8 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
     () =>
       new Map(
         available().map(
-          (model) => [modelKey({ providerID: model.provider.id, modelID: model.id }), Date.parse(model.release_date)] as const,
+          (model) =>
+            [modelKey({ providerID: model.provider.id, modelID: model.id }), releaseTime(model.release_date)] as const,
         ),
       ),
   )
