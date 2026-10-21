@@ -422,6 +422,18 @@
   }
 }
 
+[data-component="context-tool-group-preview"] {
+  margin-top: 6px;
+  max-width: min(520px, 100%);
+
+  img {
+    border: 0.5px solid var(--v2-border-border-base);
+    border-radius: 6px;
+    max-height: 360px;
+    object-fit: contain;
+  }
+}
+
 [data-component="bash-output"] {
   direction: ltr;
   unicode-bidi: isolate;

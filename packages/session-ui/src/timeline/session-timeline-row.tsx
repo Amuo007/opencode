@@ -399,6 +399,9 @@ export function createSessionTimelineRowRenderer(input: {
 
     if (item.type === "reasoning") return input.reasoningMode() === "full"
 
+    // Browser screenshots are what the agent saw; show them unless the user collapses them.
+    if (item.type === "tool" && item.name === "chrome_screenshot" && item.state.status === "completed") return true
+
     return currentContentDefaultOpen(item, input.shellToolDefaultOpen(), input.editToolDefaultOpen())
   }
 

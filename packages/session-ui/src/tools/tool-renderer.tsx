@@ -480,6 +480,12 @@ export function CurrentContextToolGroup(props: {
 }) {
   const i18n = useI18n()
   const tools = createMemo(() => props.parts.filter((part) => part.type === "tool"))
+  // A collapsed group still shows the latest browser screenshot, like a chat attachment.
+  const latestScreenshot = createMemo(() => {
+    const shot = tools().findLast((tool) => tool.name === "chrome_screenshot" && tool.state.status === "completed")
+    const path = shot ? currentToolMetadata(shot).path : undefined
+    return typeof path === "string" ? path : undefined
+  })
 
   const pending = createMemo(
     () => props.busy || tools().some((tool) => tool.state.status === "streaming" || tool.state.status === "running"),
@@ -846,6 +852,13 @@ export function CurrentContextToolGroup(props: {
           </Index>
         </div>
       </BasicTool>
+      <Show when={!props.open && latestScreenshot()} keyed>
+        {(path) => (
+          <div data-component="context-tool-group-preview">
+            <ReadImage path={path} onContentRendered={props.onSizeChange} />
+          </div>
+        )}
+      </Show>
     </div>
   )
 }
