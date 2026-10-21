@@ -338,7 +338,7 @@ const namespacedTools = [
   { prefix: "memory_", label: "Memory", icon: "✎" },
   { prefix: "notebook_", label: "Notebook", icon: "▤" },
 ]
-const detailKeys = ["url", "path", "name", "key", "option", "query", "text", "selector", "direction", "expression"]
+const detailKeys = ["url", "path", "name", "key", "option", "preset", "query", "text", "selector", "direction", "expression"]
 
 function fallbackInline(ctx: ToolFrame): ToolInline {
   if (ctx.name === "plan_exit") {

@@ -202,6 +202,7 @@ const source = {
   "ui.tool.chrome.press": "Press key",
   "ui.tool.chrome.select": "Choose option",
   "ui.tool.chrome.wait": "Wait for page",
+  "ui.tool.chrome.resize": "Resize viewport",
   "ui.tool.chrome.scroll": "Scroll",
   "ui.tool.chrome.eval": "Run script",
   "ui.tool.chrome.console": "Console",

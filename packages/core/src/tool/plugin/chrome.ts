@@ -19,6 +19,12 @@ import { Permission } from "../../permission.js"
 export const namespace = "chrome"
 export const action = "chrome"
 const VIEWPORT = { width: 1280, height: 800 }
+const viewports = {
+  phone: { width: 390, height: 844 },
+  tablet: { width: 820, height: 1180 },
+  laptop: VIEWPORT,
+  desktop: { width: 1920, height: 1080 },
+}
 const MAX_TEXT = 12_000
 const MAX_LOGS = 200
 
@@ -669,6 +675,42 @@ export const Plugin = {
               })
               const what = input.selector ? `selector ${input.selector}` : `text "${input.text ?? ""}"`
               const output = found ? `Found ${what}.` : `Timed out waiting for ${what}.`
+              return { output: { output }, content: output }
+            }),
+        })
+
+        editor.add({
+          name: "resize",
+          options,
+          description:
+            "Change the browser viewport to test responsive layouts: a preset (phone 390x844, tablet 820x1180, laptop 1280x800, desktop 1920x1080) or an exact width and height. Take a screenshot afterwards to check the layout.",
+          input: Schema.Struct({
+            preset: Schema.optionalKey(Schema.Literals(["phone", "tablet", "laptop", "desktop"])).annotate({
+              description: "Device preset",
+            }),
+            width: Schema.optionalKey(Schema.Int).annotate({ description: "Viewport width in CSS pixels" }),
+            height: Schema.optionalKey(Schema.Int).annotate({ description: "Viewport height in CSS pixels" }),
+          }),
+          output: TextOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const preset = viewports[input.preset ?? "laptop"]
+              const size = {
+                width: Math.min(Math.max(input.width ?? preset.width, 200), 3840),
+                height: Math.min(Math.max(input.height ?? preset.height, 200), 2400),
+              }
+              const mobile = input.preset === "phone" || input.preset === "tablet" || size.width < 768
+              yield* run("Could not resize the viewport", async (page) => {
+                await page.page.send("Emulation.setDeviceMetricsOverride", {
+                  ...size,
+                  deviceScaleFactor: 1,
+                  mobile,
+                })
+                await page.page.send("Emulation.setTouchEmulationEnabled", { enabled: mobile })
+                await settle()
+              })
+              const output = `Viewport is now ${size.width}x${size.height}${mobile ? " (mobile)" : ""}.`
               return { output: { output }, content: output }
             }),
         })

@@ -19,4 +19,4 @@ Build interfaces that look deliberate and finished, then check them visually.
 
 ## Check your work
 
-Open the page with `chrome_open`, look at it with `chrome_screenshot`, and fix spacing, alignment and contrast issues you see. Use `chrome_eval` to test narrow layouts, for example by temporarily setting `document.body.style.width = '375px'` and taking another screenshot. Iterate until it looks polished, then describe the design choices briefly.
+Open the page with `chrome_open`, look at it with `chrome_screenshot`, and fix spacing, alignment and contrast issues you see. Check responsive layouts with `chrome_resize` (`preset: "phone"`, `"tablet"`, `"desktop"`) followed by `chrome_screenshot`, then switch back with `preset: "laptop"`. Iterate until it looks polished, then describe the design choices briefly.
