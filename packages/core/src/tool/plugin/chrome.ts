@@ -405,8 +405,11 @@ const keys: Record<string, { key: string; code: string; keyCode: number; text?: 
   end: { key: "End", code: "End", keyCode: 35 },
 }
 
+// Small models often send numbers as strings, so numeric inputs accept both.
+const Loose = Schema.Union([Schema.Number, Schema.NumberFromString])
+
 const Target = {
-  ref: Schema.optionalKey(Schema.Int).annotate({ description: "Element number from chrome_snapshot (preferred)." }),
+  ref: Schema.optionalKey(Loose).annotate({ description: "Element number from chrome_snapshot (preferred)." }),
   selector: Schema.optionalKey(Schema.String).annotate({ description: "CSS selector, when no ref fits." }),
   text: Schema.optionalKey(Schema.String).annotate({ description: "Visible text of the element, when no ref fits." }),
 }
@@ -756,8 +759,8 @@ export const Plugin = {
             "Click an element by ref (from chrome_snapshot), CSS selector, or visible text, or click x/y coordinates.",
           input: Schema.Struct({
             ...Target,
-            x: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport x coordinate" }),
-            y: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport y coordinate" }),
+            x: Schema.optionalKey(Loose).annotate({ description: "Viewport x coordinate" }),
+            y: Schema.optionalKey(Loose).annotate({ description: "Viewport y coordinate" }),
           }),
           output: PageOutput,
           execute: (input, context) =>
@@ -787,8 +790,8 @@ export const Plugin = {
             "Move the mouse over an element by ref, CSS selector or visible text, or over x/y coordinates, to open hover menus or show tooltips. Take a chrome_snapshot or chrome_screenshot afterwards to see what appeared.",
           input: Schema.Struct({
             ...Target,
-            x: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport x coordinate" }),
-            y: Schema.optionalKey(Schema.Number).annotate({ description: "Viewport y coordinate" }),
+            x: Schema.optionalKey(Loose).annotate({ description: "Viewport x coordinate" }),
+            y: Schema.optionalKey(Loose).annotate({ description: "Viewport y coordinate" }),
           }),
           output: PageOutput,
           execute: (input, context) =>
@@ -804,6 +807,68 @@ export const Plugin = {
                 return location(page)
               })
               return { output, content: `Hovering. On ${output.url} (${output.title || "untitled"}).` }
+            }),
+        })
+
+        editor.add({
+          name: "drag",
+          options,
+          description:
+            "Drag an element (by ref, selector or text, or from x/y) and drop it on another element (to_ref, to_selector, to_text) or at to_x/to_y. Works for HTML drag and drop and for pointer-based sliders, sortable lists and boards.",
+          input: Schema.Struct({
+            ...Target,
+            x: Schema.optionalKey(Loose).annotate({ description: "Start x when no element is given" }),
+            y: Schema.optionalKey(Loose).annotate({ description: "Start y when no element is given" }),
+            to_ref: Schema.optionalKey(Loose).annotate({ description: "Drop target ref from chrome_snapshot" }),
+            to_selector: Schema.optionalKey(Schema.String).annotate({ description: "Drop target CSS selector" }),
+            to_text: Schema.optionalKey(Schema.String).annotate({ description: "Drop target visible text" }),
+            to_x: Schema.optionalKey(Loose).annotate({ description: "Drop x when no target element is given" }),
+            to_y: Schema.optionalKey(Loose).annotate({ description: "Drop y when no target element is given" }),
+          }),
+          output: PageOutput,
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              yield* allow(context, "*", input)
+              const output = yield* run("Could not drag", async (page) => {
+                const from =
+                  input.x !== undefined && input.y !== undefined
+                    ? { x: input.x, y: input.y }
+                    : await pointAt(page, input)
+                const to =
+                  input.to_x !== undefined && input.to_y !== undefined
+                    ? { x: input.to_x, y: input.to_y }
+                    : await pointAt(page, { ref: input.to_ref, selector: input.to_selector, text: input.to_text })
+                // Native HTML drags are intercepted so they can be dropped with drag events; pointer-based ones just
+                // follow the mouse.
+                await page.page.send("Input.setInterceptDrags", { enabled: true })
+                const intercepted = page.page.once("Input.dragIntercepted", 3000)
+                let data: unknown
+                const off = page.page.on("Input.dragIntercepted", (params) => (data = params.data))
+                const mouse = (type: string, at: { x: number; y: number }, extra: Record<string, unknown> = {}) =>
+                  page.page.send("Input.dispatchMouseEvent", { type, x: at.x, y: at.y, button: "left", ...extra })
+                try {
+                  await mouse("mouseMoved", from)
+                  await mouse("mousePressed", from, { clickCount: 1 })
+                  for (const step of [0.25, 0.5, 0.75, 1]) {
+                    await mouse("mouseMoved", {
+                      x: from.x + (to.x - from.x) * step,
+                      y: from.y + (to.y - from.y) * step,
+                    })
+                  }
+                  await Promise.race([intercepted, new Promise((resolve) => setTimeout(resolve, 300))])
+                  if (data !== undefined) {
+                    for (const type of ["dragEnter", "dragOver", "drop"])
+                      await page.page.send("Input.dispatchDragEvent", { type, x: to.x, y: to.y, data })
+                  }
+                  await mouse("mouseReleased", to, { clickCount: 1 })
+                } finally {
+                  off()
+                  await page.page.send("Input.setInterceptDrags", { enabled: false }).catch(() => undefined)
+                }
+                await settle()
+                return location(page)
+              })
+              return { output, content: `Dragged. On ${output.url} (${output.title || "untitled"}).` }
             }),
         })
 
@@ -942,7 +1007,7 @@ export const Plugin = {
           input: Schema.Struct({
             text: Schema.optionalKey(Schema.String).annotate({ description: "Text to wait for" }),
             selector: Schema.optionalKey(Schema.String).annotate({ description: "CSS selector to wait for" }),
-            seconds: Schema.optionalKey(Schema.Number).annotate({ description: "Maximum wait in seconds" }),
+            seconds: Schema.optionalKey(Loose).annotate({ description: "Maximum wait in seconds" }),
           }),
           output: TextOutput,
           execute: (input, context) =>
@@ -972,8 +1037,8 @@ export const Plugin = {
             preset: Schema.optionalKey(Schema.Literals(["phone", "tablet", "laptop", "desktop"])).annotate({
               description: "Device preset",
             }),
-            width: Schema.optionalKey(Schema.Int).annotate({ description: "Viewport width in CSS pixels" }),
-            height: Schema.optionalKey(Schema.Int).annotate({ description: "Viewport height in CSS pixels" }),
+            width: Schema.optionalKey(Loose).annotate({ description: "Viewport width in CSS pixels" }),
+            height: Schema.optionalKey(Loose).annotate({ description: "Viewport height in CSS pixels" }),
           }),
           output: TextOutput,
           execute: (input, context) =>
@@ -1005,7 +1070,7 @@ export const Plugin = {
           description: "Scroll the page up or down by a number of pixels (default one screen).",
           input: Schema.Struct({
             direction: Schema.Literals(["up", "down"]).annotate({ description: "Scroll direction" }),
-            pixels: Schema.optionalKey(Schema.Int).annotate({ description: "Distance in pixels" }),
+            pixels: Schema.optionalKey(Loose).annotate({ description: "Distance in pixels" }),
           }),
           output: TextOutput,
           execute: (input, context) =>
