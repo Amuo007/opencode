@@ -213,6 +213,14 @@ class Browser {
       const exception = details?.exception as Record<string, unknown> | undefined
       browser.log(`uncaught exception: ${String(exception?.description ?? details?.text ?? "unknown error")}`)
     })
+    // alert, confirm, prompt and beforeunload dialogs would block the page and every later call: accept them and
+    // record them where chrome_console shows them.
+    page.on("Page.javascriptDialogOpening", (params) => {
+      browser.log(`dialog ${String(params.type)}: ${String(params.message)} (accepted automatically)`)
+      void page
+        .send("Page.handleJavaScriptDialog", { accept: true, promptText: String(params.defaultPrompt ?? "") })
+        .catch(() => undefined)
+    })
     page.on("Log.entryAdded", (params) => {
       const entry = params.entry as Record<string, unknown>
       browser.log(`${String(entry.level)}: ${String(entry.text)}${entry.url ? ` (${String(entry.url)})` : ""}`)
