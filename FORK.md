@@ -11,11 +11,14 @@ Build a standalone binary for this machine (local channel: no auto-updates, its 
 ```bash
 cd packages/cli && OPENCODE_CHANNEL=local bun run script/build.ts --single --skip-install
 ./dist/cli-darwin-arm64/bin/opencode            # terminal UI
-./dist/cli-darwin-arm64/bin/opencode serve      # web UI at the printed address
+./dist/cli-darwin-arm64/bin/opencode pair       # web UI: prints a one-time sign-in link, open it in your browser
+./dist/cli-darwin-arm64/bin/opencode serve      # or a foreground web server at the printed address
 ```
 
-`serve` prints the address and a `server password`. Open the address, choose **Use password** and paste it
-(or start it with `OPENCODE_PASSWORD=yourpassword` to pick your own, and `--port 4096` to fix the port).
+`pair` starts the background server if needed and prints a link that signs the browser in (it works once and
+expires in 5 minutes; run `pair` again for another browser). `serve` instead prints the address and a
+`server password`: open the address, choose **Use password** and paste it (set `OPENCODE_PASSWORD` to pick your
+own, and `--port 4096` to fix the port). `opencode service stop` stops the background server.
 
 Or run from source with `bun run dev` in the repo root. It reads your normal `~/.config/opencode` config.
 
