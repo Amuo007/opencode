@@ -6,6 +6,7 @@ import { isDeepStrictEqual } from "node:util"
 import { applyEdits, modify, type ParseError, parse } from "jsonc-parser"
 import { Context, Effect, FiberMap, Layer, Option, PubSub, Ref, Schema, Semaphore, Stream } from "effect"
 import { Directory, Document, Info, type Patch, type Entry, Event } from "@opencode/schema/config"
+import { ConfigMCP } from "@opencode/schema/config/mcp"
 import { Credential } from "./credential.js"
 import { Bus } from "./bus.js"
 import { Watcher } from "./filesystem/watcher.js"
@@ -386,13 +387,24 @@ export const layer = (options?: Options) =>
           const filepath =
             (yield* Effect.filter(candidates, fs.isFile)).at(-1) ?? path.join(directory, "opencode.jsonc")
           const text = (yield* fs.readFileStringSafe(filepath)) ?? "{}\n"
+          const edits: Array<[string[], unknown]> = [
+            ...(patch.shell === undefined ? [] : [[["shell"], patch.shell ?? undefined] as [string[], unknown]]),
+            ...Object.entries(patch.mcp ?? {}).flatMap(([name, server]): Array<[string[], unknown]> =>
+              server === null
+                ? [
+                    [["mcp", "servers", name], undefined],
+                    [["mcp", name], undefined],
+                  ]
+                : [[["mcp", "servers", name], Schema.encodeSync(ConfigMCP.Server)(server)]],
+            ),
+          ]
           const updated = yield* Effect.try({
             try: () =>
-              applyEdits(
+              edits.reduce(
+                (current, [path, value]) =>
+                  // Removing a key that is absent is a no-op edit list, so removals stay idempotent.
+                  applyEdits(current, modify(current, path, value, { formattingOptions: { tabSize: 2, insertSpaces: true } })),
                 text,
-                modify(text, ["shell"], patch.shell ?? undefined, {
-                  formattingOptions: { tabSize: 2, insertSpaces: true },
-                }),
               ),
             catch: (cause) => new FSUtil.FileSystemError({ method: "config.update", cause }),
           })

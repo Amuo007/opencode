@@ -114,7 +114,10 @@ export class Info extends Schema.Class<Info>("Config.Info")({
 }) {}
 
 export const Patch = Schema.Struct({
-  shell: Schema.NullOr(Schema.String),
+  shell: Schema.NullOr(Schema.String).pipe(optional),
+  mcp: Schema.Record(Schema.String, Schema.NullOr(ConfigMCP.Server)).pipe(optional).annotate({
+    description: "MCP servers to save by name in the global configuration; null removes the server",
+  }),
 }).annotate({ identifier: "Config.Patch" })
 export interface Patch extends Schema.Schema.Type<typeof Patch> {}
 

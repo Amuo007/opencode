@@ -1,5 +1,8 @@
 import { Component, For, createEffect, createMemo, createResource } from "solid-js"
+import { Button } from "@opencode/ui/button"
+import { useDialog } from "@opencode/ui/context/dialog"
 import { Icon } from "@opencode/ui/icon"
+import { IconButton } from "@opencode/ui/icon-button"
 import { Switch } from "@opencode/ui/switch"
 import { Tabs } from "@opencode/ui/tabs"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -9,6 +12,8 @@ import { useMcpToggle } from "@/providers/connect/mcp"
 import { pluginLabels } from "@/providers/catalog/plugin"
 import { ExternalLink } from "@/runtime/platform/external-link"
 import { SettingsList } from "@/settings/list"
+import { DialogAddMcpServer } from "@/settings/providers/mcp-dialog"
+import { showToast } from "@/shell/notifications/toast"
 import type { SettingsView } from "@/settings/surface"
 import "@/settings/settings.css"
 
@@ -52,6 +57,27 @@ export const SettingsExtensions: Component<{
   const handleMcpToggle = (item: McpRowItem, checked: boolean) => {
     if (item.enabled === checked || toggleMcp.isPending) return
     toggleMcp.mutate(item.name)
+  }
+
+  const dialog = useDialog()
+  // Config reloads and server connections settle asynchronously after a save, so refresh twice.
+  const refreshSoon = () => {
+    void refetchMcp()
+    setTimeout(() => void refetchMcp(), 1500)
+  }
+  const addMcp = () => void dialog.show(() => <DialogAddMcpServer onSaved={refreshSoon} />)
+  const removeMcp = async (item: McpRowItem) => {
+    try {
+      await serverSdk.api.config.update({ mcp: { [item.name]: null } })
+      await serverSdk.api.mcp.remove({ server: item.name }).catch(() => undefined)
+      showToast({ variant: "success", icon: "circle-check", title: language.t("settings.extensions.mcp.removed", { name: item.name }) })
+      refreshSoon()
+    } catch (error) {
+      showToast({
+        title: language.t("common.requestFailed"),
+        description: error instanceof Error ? error.message : String(error),
+      })
+    }
   }
 
   const [pluginList] = createResource(
@@ -104,9 +130,9 @@ export const SettingsExtensions: Component<{
                 <span class="settings-extension-heading text-13-medium">
                   {language.t("settings.extensions.availableAll")}
                 </span>
-                <span class="text-13-regular text-v2-text-text-muted">
-                  {language.t("settings.extensions.manageConfig")}
-                </span>
+                <Button type="button" size="small" variant="neutral" icon="plus-small" onClick={addMcp}>
+                  {language.t("settings.extensions.mcp.add.button")}
+                </Button>
               </div>
               <SettingsList variant="catalog">
                 <For each={mcps()}>
@@ -116,9 +142,18 @@ export const SettingsExtensions: Component<{
                         <Icon name="mcp" class="text-v2-icon-icon-muted shrink-0" />
                         <span class="settings-extension-name truncate">{item.name}</span>
                       </div>
-                      <Switch checked={item.enabled} onChange={(checked) => handleMcpToggle(item, checked)} hideLabel>
-                        {item.name}
-                      </Switch>
+                      <div class="flex items-center gap-2">
+                        <IconButton
+                          type="button"
+                          icon={<Icon name="trash" />}
+                          variant="ghost"
+                          aria-label={language.t("settings.extensions.mcp.remove", { name: item.name })}
+                          onClick={() => void removeMcp(item)}
+                        />
+                        <Switch checked={item.enabled} onChange={(checked) => handleMcpToggle(item, checked)} hideLabel>
+                          {item.name}
+                        </Switch>
+                      </div>
                     </div>
                   )}
                 </For>
