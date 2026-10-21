@@ -369,6 +369,9 @@ function toolTitle(tool: SessionMessageAssistantTool, i18n: UiI18n) {
       if (tool.name.startsWith("notebook_")) return i18n.t("ui.tool.notebook")
       if (tool.name === "plan_exit") return i18n.t("ui.tool.planExit")
       if (tool.name === "lsp") return i18n.t("ui.tool.lsp")
+      if (tool.name === "shell_stop") return i18n.t("ui.tool.shellStop")
+      if (tool.name === "goal_complete") return i18n.t("ui.tool.goalComplete")
+      if (tool.name === "notify") return i18n.t("ui.tool.notify")
       return tool.name
   }
 }
@@ -1854,6 +1857,55 @@ ToolRegistry.register({
 
 ToolRegistry.register({ name: "notebook_read", render: NotebookTool })
 ToolRegistry.register({ name: "notebook_edit", render: NotebookTool })
+
+ToolRegistry.register({
+  name: "shell_stop",
+  render(props) {
+    const i18n = useI18n()
+    const id = () => textValue(props.input.shell_id)
+    return (
+      <BasicTool
+        {...props}
+        icon="console"
+        hideDetails
+        trigger={{ title: i18n.t(id() ? "ui.tool.shellStop" : "ui.tool.shellList"), subtitle: id() }}
+      />
+    )
+  },
+})
+
+ToolRegistry.register({
+  name: "goal_complete",
+  render(props) {
+    const i18n = useI18n()
+    return (
+      <BasicTool
+        {...props}
+        icon="circle-check"
+        hideDetails
+        trigger={{
+          title: i18n.t(props.input.achieved === false ? "ui.tool.goalFailed" : "ui.tool.goalComplete"),
+          subtitle: textValue(props.input.summary)?.split("\n")[0]?.slice(0, 120),
+        }}
+      />
+    )
+  },
+})
+
+ToolRegistry.register({
+  name: "notify",
+  render(props) {
+    const i18n = useI18n()
+    return (
+      <BasicTool
+        {...props}
+        icon="notifications"
+        hideDetails
+        trigger={{ title: i18n.t("ui.tool.notify"), subtitle: textValue(props.input.title) }}
+      />
+    )
+  },
+})
 
 ToolRegistry.register({
   name: "websearch",

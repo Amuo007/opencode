@@ -346,6 +346,19 @@ function fallbackInline(ctx: ToolFrame): ToolInline {
     const heading = plan.split("\n").find((line) => line.trim())?.replace(/^#+\s*/, "")
     return { icon: "☑", title: `Plan ready for approval${heading ? `: ${heading.slice(0, 100)}` : ""}` }
   }
+  if (ctx.name === "shell_stop") {
+    const id = typeof ctx.input.shell_id === "string" ? ctx.input.shell_id : ""
+    return { icon: "■", title: id ? `Stop background command ${id}` : "List background commands" }
+  }
+  if (ctx.name === "goal_complete") {
+    const summary = typeof ctx.input.summary === "string" ? ctx.input.summary.split("\n")[0] : ""
+    const title = ctx.input.achieved === false ? "Goal not achieved" : "Goal complete"
+    return { icon: "✓", title: summary ? `${title}: ${summary.slice(0, 100)}` : title }
+  }
+  if (ctx.name === "notify") {
+    const title = typeof ctx.input.title === "string" ? ctx.input.title : ""
+    return { icon: "◆", title: title ? `Notification: ${title}` : "Notification" }
+  }
   const namespaced = namespacedTools.find((item) => ctx.name.startsWith(item.prefix))
   if (namespaced) {
     const detail = detailKeys.map((key) => ctx.input[key]).find((value) => typeof value === "string" && value)

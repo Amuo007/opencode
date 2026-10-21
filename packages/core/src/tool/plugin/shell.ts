@@ -21,6 +21,7 @@ import { ShellSelect } from "../../shell/select.js"
 import { ShellResult } from "../../shell/result.js"
 
 export const name = "shell"
+export const STOP = "shell_stop"
 export const DEFAULT_TIMEOUT_MS = 2 * 60 * 1_000
 
 const BACKGROUND_INSTRUCTION =
@@ -189,7 +190,7 @@ export const Plugin = {
     )
 
     yield* ctx.tool
-      .transform((editor) =>
+      .transform((editor) => {
         editor.add({
           name,
           options: { codemode: false },
@@ -276,8 +277,45 @@ export const Plugin = {
                 (error) => new ToolFailure({ message: `Unable to execute command: ${input.command}`, error }),
               ),
             ),
-        }),
-      )
+        })
+
+        editor.add({
+          name: STOP,
+          options: { codemode: false },
+          description:
+            "Stop a command that is running in the background (started with background: true, such as a dev server or watcher) by the shell ID it returned. Call it without shell_id to list this session's running background commands.",
+          input: Schema.Struct({
+            shell_id: Schema.optionalKey(Schema.String).annotate({
+              description: "Shell ID from the background command's result. Omit to list running commands.",
+            }),
+          }),
+          output: Schema.Struct({ output: Schema.String }),
+          execute: (input, context) =>
+            Effect.gen(function* () {
+              const running = (yield* jobs.runningBackground).flatMap((item) =>
+                item.kind === "shell" && item.sessionID === context.sessionID ? [item] : [],
+              )
+              const reply = (output: string) => ({ output: { output }, content: output })
+              if (input.shell_id === undefined)
+                return reply(
+                  running.length === 0
+                    ? "No background commands are running."
+                    : running.map((item) => `${item.shellID}  ${item.command}`).join("\n"),
+                )
+              const target = running.find((item) => item.shellID === input.shell_id)
+              if (!target) {
+                const info = yield* jobs.get(input.shell_id)
+                return reply(
+                  info && info.metadata?.sessionID === context.sessionID
+                    ? `Shell ${input.shell_id} is not running (${info.status}).`
+                    : `No background command with shell ID ${input.shell_id} in this session.`,
+                )
+              }
+              yield* jobs.cancel(target.shellID)
+              return reply(`Stopped ${target.shellID}: ${target.command}`)
+            }),
+        })
+      })
       .pipe(Effect.orDie)
 
     const hook = (event: SessionHooks["context"]) =>
