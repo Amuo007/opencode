@@ -20,6 +20,7 @@ export default {
   "stats.outputTokens": "Output Tokens",
   "stats.reasoningTokens": "Reasoning Tokens",
   "stats.cacheTokens": "Cache Tokens (read/write)",
+  "stats.speed": "Output Speed (last / average)",
   "stats.userMessages": "User Messages",
   "stats.assistantMessages": "Assistant Messages",
   "stats.totalCost": "Total Cost",

@@ -15,7 +15,7 @@ import { lastAssistantWithUsage } from "@opencode/client/solid"
 import { createKeyed, useExtension, type MountedSession } from "../sdk"
 import { catalogModel, syncCatalog } from "./catalog"
 import { fetchSessionExport, sessionExportFilename } from "./export"
-import { createSessionContextFormatter } from "./format"
+import { createSessionContextFormatter, outputSpeed } from "./format"
 
 function Stat(props: { label: string; value: JSX.Element }) {
   return (
@@ -194,6 +194,15 @@ export default function SessionContextTab(props: { session: MountedSession }) {
       label: "stats.cacheTokens",
       value: () =>
         `${formatter().number(context()?.tokens.cache.read)} / ${formatter().number(context()?.tokens.cache.write)}`,
+    },
+    {
+      label: "stats.speed",
+      value: () => {
+        const speed = outputSpeed(messages())
+        const format = (value: number | undefined) =>
+          value === undefined ? "—" : value.toLocaleString(i18n.locale(), { maximumFractionDigits: 1 })
+        return `${format(speed.last)} / ${format(speed.average)} tok/s`
+      },
     },
     { label: "stats.userMessages", value: () => counts().user.toLocaleString(i18n.locale()) },
     { label: "stats.assistantMessages", value: () => counts().assistant.toLocaleString(i18n.locale()) },
