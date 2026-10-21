@@ -1866,6 +1866,48 @@ export interface MemoryApi<E = never> {
   readonly remove: MemoryRemoveOperation<E>
 }
 
+export type BrowserViewGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type BrowserViewGetOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly open: boolean
+    readonly url: string
+    readonly title: string
+    readonly width: number
+    readonly height: number
+    readonly image: string
+  }
+}
+export type BrowserViewGetOperation<E = never> = (input?: BrowserViewGetInput) => Effect.Effect<BrowserViewGetOutput, E>
+
+export type BrowserViewActInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly payload:
+    | { readonly type: "navigate"; readonly url: string }
+    | { readonly type: "click"; readonly x: number; readonly y: number }
+    | { readonly type: "scroll"; readonly x: number; readonly y: number; readonly deltaY: number }
+    | { readonly type: "type"; readonly text: string }
+    | { readonly type: "key"; readonly key: string }
+    | { readonly type: "back" | "forward" | "reload" }
+}
+export type BrowserViewActOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly open: boolean
+    readonly url: string
+    readonly title: string
+    readonly width: number
+    readonly height: number
+    readonly image: string
+  }
+}
+export type BrowserViewActOperation<E = never> = (input: BrowserViewActInput) => Effect.Effect<BrowserViewActOutput, E>
+
+export interface BrowserViewApi<E = never> {
+  readonly get: BrowserViewGetOperation<E>
+  readonly act: BrowserViewActOperation<E>
+}
+
 export type RpcCallInput = {
   readonly rpcID: string
   readonly method: string
@@ -2364,6 +2406,7 @@ export interface AppApi<E = never> {
   readonly command: CommandApi<E>
   readonly skill: SkillApi<E>
   readonly memory: MemoryApi<E>
+  readonly browserView: BrowserViewApi<E>
   readonly rpc: RpcApi<E>
   readonly event: EventApi<E>
   readonly pty: PtyApi<E>

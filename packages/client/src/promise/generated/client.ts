@@ -198,6 +198,10 @@ import type {
   MemoryListOutput,
   MemoryRemoveInput,
   MemoryRemoveOutput,
+  BrowserViewGetInput,
+  BrowserViewGetOutput,
+  BrowserViewActInput,
+  BrowserViewActOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1756,6 +1760,33 @@ export function make(options: ClientOptions) {
             successStatus: 204,
             declaredStatuses: [400, 401, 404],
             empty: true,
+          },
+          requestOptions,
+        ),
+    },
+    browserView: {
+      get: (input?: BrowserViewGetInput, requestOptions?: RequestOptions) =>
+        request<BrowserViewGetOutput>(
+          {
+            method: "GET",
+            path: `/api/experimental/browser`,
+            query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404, 503],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      act: (input: BrowserViewActInput, requestOptions?: RequestOptions) =>
+        request<BrowserViewActOutput>(
+          {
+            method: "POST",
+            path: `/api/experimental/browser`,
+            query: { location: input["location"] },
+            body: input["payload"],
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404, 503],
+            empty: false,
           },
           requestOptions,
         ),

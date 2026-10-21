@@ -262,6 +262,15 @@ export type CommandInfo = { name: string; description?: string }
 
 export type MemoryEntry = { name: string; description: string; type: string; content: string }
 
+export type BrowserViewInfo = {
+  open: boolean
+  url: string
+  title: string
+  width: number
+  height: number
+  image: string
+}
+
 export type RpcOutput = { output?: any }
 
 export type PermissionReply = "once" | "always" | "reject"
@@ -5588,6 +5597,25 @@ export type MemoryRemoveInput = {
 }
 
 export type MemoryRemoveOutput = void
+
+export type BrowserViewGetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type BrowserViewGetOutput = { location: LocationPublicRef; data: BrowserViewInfo }
+
+export type BrowserViewActInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly payload:
+    | { readonly type: "navigate"; readonly url: string }
+    | { readonly type: "click"; readonly x: number; readonly y: number }
+    | { readonly type: "scroll"; readonly x: number; readonly y: number; readonly deltaY: number }
+    | { readonly type: "type"; readonly text: string }
+    | { readonly type: "key"; readonly key: string }
+    | { readonly type: "back" | "forward" | "reload" }
+}
+
+export type BrowserViewActOutput = { location: LocationPublicRef; data: BrowserViewInfo }
 
 export type RpcCallInput = {
   readonly rpcID: { readonly rpcID: string; readonly method: string }["rpcID"]

@@ -25,6 +25,7 @@ test("exposes every standard HTTP API group", () => {
     "command",
     "skill",
     "memory",
+    "browserView",
     "rpc",
     "event",
     "pty",

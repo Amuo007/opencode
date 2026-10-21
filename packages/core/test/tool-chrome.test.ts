@@ -26,3 +26,18 @@ describe("webfetch script shells", () => {
     expect(isScriptShell(`<p>${"long text ".repeat(40)}</p><div id="root"></div><script></script>`)).toBe(false)
   })
 })
+
+describe("agent browser addresses", () => {
+  test("adds a scheme to typed addresses", () => {
+    expect(ChromeTools.normalizeURL("localhost:3000")).toBe("http://localhost:3000")
+    expect(ChromeTools.normalizeURL("127.0.0.1:8080/app")).toBe("http://127.0.0.1:8080/app")
+    expect(ChromeTools.normalizeURL("example.com")).toBe("https://example.com")
+    expect(ChromeTools.normalizeURL(" https://a.dev/x ")).toBe("https://a.dev/x")
+    expect(ChromeTools.normalizeURL("about:blank")).toBe("about:blank")
+  })
+
+  test("reports no view for a Location without a browser", () => {
+    expect(ChromeTools.live("/no/such/location")).toBeUndefined()
+    expect(ChromeTools.closedView.open).toBe(false)
+  })
+})

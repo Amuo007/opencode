@@ -354,6 +354,30 @@ const TextOutput = Schema.Struct({ output: Schema.String })
 const fail = (message: string) => (error: unknown) =>
   new ToolFailure({ message: `${message}: ${error instanceof Error ? error.message : String(error)}`, error })
 
+/** What the session UI's live view shows of a Location's browser. */
+export type View = { open: boolean; url: string; title: string; width: number; height: number; image: string }
+export type Action =
+  | { type: "navigate"; url: string }
+  | { type: "click"; x: number; y: number }
+  | { type: "scroll"; x: number; y: number; deltaY: number }
+  | { type: "type"; text: string }
+  | { type: "key"; key: string }
+  | { type: "back" | "forward" | "reload" }
+export type Live = { view: () => Promise<View>; act: (action: Action) => Promise<void> }
+
+export const closedView: View = { open: false, url: "", title: "", ...VIEWPORT, image: "" }
+
+// Each Location's browser, so the server can show it in the session UI and the user can drive it.
+const registry = new Map<string, Live>()
+export const live = (directory: string) => registry.get(directory)
+
+// A typed address without a scheme opens over https, or http for local servers.
+export const normalizeURL = (input: string) => {
+  const value = input.trim()
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) || /^(about|data|file|view-source):/i.test(value)) return value
+  return /^(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(value) ? `http://${value}` : `https://${value}`
+}
+
 export const Plugin = {
   id: "opencode.tool.chrome",
   effect: Effect.fn("ChromeTools.Plugin")(function* (ctx: Context) {
@@ -433,6 +457,59 @@ export const Plugin = {
       await page.page.send("Input.dispatchKeyEvent", { type: key.text ? "keyDown" : "rawKeyDown", ...base, ...(key.text ? { text: key.text } : {}) })
       await page.page.send("Input.dispatchKeyEvent", { type: "keyUp", ...base })
     }
+
+    const view = async (): Promise<View> => {
+      const existing = current
+      const page = existing ? await existing.catch(() => undefined) : undefined
+      if (!page?.alive) return closedView
+      const [shot, info] = await Promise.all([
+        page.page.send("Page.captureScreenshot", { format: "jpeg", quality: 70 }),
+        page.evaluate("({ url: location.href, title: document.title, width: innerWidth, height: innerHeight })") as Promise<
+          Omit<View, "open" | "image">
+        >,
+      ])
+      return { open: true, ...info, image: String(shot.data) }
+    }
+
+    const act = async (action: Action) => {
+      if (action.type !== "navigate" && !current) throw new Error("The browser is not open")
+      const page = await browser()
+      if (action.type === "navigate") return page.navigate(normalizeURL(action.url))
+      if (action.type === "reload") return page.navigate(String(await page.evaluate("location.href")))
+      if (action.type === "back" || action.type === "forward") {
+        await page.evaluate(`history.${action.type}()`)
+        return settle().then(() => undefined)
+      }
+      if (action.type === "type") {
+        await page.page.send("Input.insertText", { text: action.text })
+        return
+      }
+      if (action.type === "key") return press(page, action.key)
+      if (action.type === "scroll") {
+        await page.page.send("Input.dispatchMouseEvent", {
+          type: "mouseWheel",
+          x: action.x,
+          y: action.y,
+          deltaX: 0,
+          deltaY: action.deltaY,
+        })
+        return settle().then(() => undefined)
+      }
+      if (action.type !== "click") return
+      const point = { x: action.x, y: action.y, button: "left", clickCount: 1 }
+      await page.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: action.x, y: action.y })
+      await page.page.send("Input.dispatchMouseEvent", { type: "mousePressed", ...point })
+      await page.page.send("Input.dispatchMouseEvent", { type: "mouseReleased", ...point })
+      await settle()
+    }
+
+    const entry: Live = { view, act }
+    registry.set(ctx.location.directory, entry)
+    yield* Effect.addFinalizer(() =>
+      Effect.sync(() => {
+        if (registry.get(ctx.location.directory) === entry) registry.delete(ctx.location.directory)
+      }),
+    )
 
     yield* ctx.tool
       .transform((editor) => {

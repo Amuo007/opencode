@@ -200,6 +200,10 @@ import type {
   MemoryListOutput,
   MemoryRemoveInput,
   MemoryRemoveOutput,
+  BrowserViewGetInput,
+  BrowserViewGetOutput,
+  BrowserViewActInput,
+  BrowserViewActOutput,
   RpcCallInput,
   RpcCallOutput,
   EventSubscribeOutput,
@@ -1286,6 +1290,25 @@ const adaptGroupMemory = (raw: RawClient["server.memory"]) => ({
   remove: EndpointMemoryRemove(raw),
 })
 
+const EndpointBrowserViewGet = (raw: RawClient["server.browserView"]) => (input?: BrowserViewGetInput) =>
+  preserveEffect<BrowserViewGetOutput>()(
+    raw["browserView.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+type BrowserViewActRequest = Parameters<RawClient["server.browserView"]["browserView.act"]>[0]
+const EndpointBrowserViewAct = (raw: RawClient["server.browserView"]) => (input: BrowserViewActInput) =>
+  preserveEffect<BrowserViewActOutput>()(
+    raw["browserView.act"]({
+      query: { location: input["location"] },
+      payload: input["payload"],
+    } as BrowserViewActRequest).pipe(Effect.mapError(mapClientError)),
+  )
+
+const adaptGroupBrowserView = (raw: RawClient["server.browserView"]) => ({
+  get: EndpointBrowserViewGet(raw),
+  act: EndpointBrowserViewAct(raw),
+})
+
 const EndpointRpcCall = (raw: RawClient["server.rpc"]) => (input: RpcCallInput) =>
   preserveEffect<RpcCallOutput>()(
     raw["rpc.call"]({
@@ -1693,6 +1716,7 @@ const adaptClient = (raw: RawClient) => ({
   command: adaptGroupCommand(raw["server.command"]),
   skill: adaptGroupSkill(raw["server.skill"]),
   memory: adaptGroupMemory(raw["server.memory"]),
+  browserView: adaptGroupBrowserView(raw["server.browserView"]),
   rpc: adaptGroupRpc(raw["server.rpc"]),
   event: adaptGroupEvent(raw["server.event"]),
   pty: adaptGroupPty(raw["server.pty"]),
