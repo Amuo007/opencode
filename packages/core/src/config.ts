@@ -475,20 +475,56 @@ export const node = configured()
 
 type Rule = { action?: unknown; resource?: unknown; effect?: unknown }
 
-/** The global permissions edit for switching tool groups on or off: a deny rule for every resource per group. */
+/**
+ * The global config edits for switching tool groups on or off: a `"deny"` entry per group in the v1 `permission`
+ * map, which v2 reads as a deny rule for every resource. OpenCode v1 reads the same file and refuses to start when
+ * it has v2 `permissions`, so the switches never write that key.
+ */
 export function toolRules(
   text: string,
   tools: Readonly<Record<string, boolean>> | undefined,
 ): Array<[string[], unknown]> {
   if (!tools || Object.keys(tools).length === 0) return []
-  const parsed = parse(text) as { permissions?: unknown } | undefined
-  const current = Array.isArray(parsed?.permissions) ? (parsed.permissions as Rule[]) : []
-  const kept = current.filter(
-    (rule) =>
-      !(typeof rule?.action === "string" && rule.action in tools && rule.resource === "*" && rule.effect === "deny"),
-  )
-  const denied = Object.entries(tools).flatMap(([action, on]) =>
-    on ? [] : [{ action, resource: "*", effect: "deny" }],
-  )
-  return [[["permissions"], [...kept, ...denied]]]
+  const parsed = parse(text) as { permission?: unknown; permissions?: unknown } | undefined
+  const edits: Array<[string[], unknown]> = []
+
+  // Earlier builds wrote the switches as v2 `permissions`; drop those rules, and the key once nothing is left.
+  if (Array.isArray(parsed?.permissions)) {
+    const current = parsed.permissions as Rule[]
+    const kept = current.filter(
+      (rule) =>
+        !(typeof rule?.action === "string" && rule.action in tools && rule.resource === "*" && rule.effect === "deny"),
+    )
+    if (kept.length !== current.length || kept.length === 0)
+      edits.push([["permissions"], kept.length ? kept : undefined])
+  }
+
+  const current = parsed?.permission
+  if (current !== undefined && typeof current !== "string" && (typeof current !== "object" || Array.isArray(current)))
+    return edits
+  // A string applies to every tool; it becomes the "*" entry so the group entries can follow it.
+  const entries: Record<string, unknown> =
+    typeof current === "string" ? { "*": current } : { ...(current as Record<string, unknown> | undefined) }
+  let changed = false
+  for (const [group, on] of Object.entries(tools)) {
+    const keys = Object.keys(entries)
+    if (on) {
+      if (entries[group] !== "deny") continue
+      delete entries[group]
+      changed = true
+      continue
+    }
+    // Rules are last-match-wins, so the deny goes after any "*" entry.
+    if (entries[group] === "deny" && keys.indexOf(group) > keys.indexOf("*")) continue
+    delete entries[group]
+    entries[group] = "deny"
+    changed = true
+  }
+  if (!changed) return edits
+  const keys = Object.keys(entries)
+  if (keys.length === 0) return [...edits, [["permission"], undefined]]
+  // Back to the string form once only the "*" entry is left.
+  if (keys.length === 1 && keys[0] === "*" && typeof entries["*"] === "string")
+    return [...edits, [["permission"], entries["*"]]]
+  return [...edits, [["permission"], entries]]
 }
