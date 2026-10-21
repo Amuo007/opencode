@@ -3,7 +3,7 @@ export * as ShellHooksPlugin from "./shell-hooks.js"
 import { define } from "@opencode/plugin/effect/plugin"
 import { Tool } from "@opencode/schema/tool"
 import { Global } from "@opencode/util/global"
-import { Effect } from "effect"
+import { Effect, Stream } from "effect"
 import { spawn } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
@@ -12,6 +12,7 @@ import path from "node:path"
 //   ~/.config/opencode/hooks.json (global) and <project>/.opencode/hooks.json (project)
 //   { "PreToolUse": [{ "matcher": "shell", "command": "./check.sh", "timeout": 30 }],
 //     "PostToolUse": [{ "matcher": "edit|write", "command": "npx prettier --write \"$OPENCODE_FILE_PATH\"" }] }
+//   "Stop" hooks run when a turn finishes (e.g. a notification); their matcher is ignored.
 // Each command gets the event as JSON on stdin. Exit code 2 blocks a PreToolUse call (stderr is
 // the reason the model sees) and sends stderr back to the model for PostToolUse. Other non-zero
 // exits are reported in the log and ignored.
@@ -21,7 +22,7 @@ const DEFAULT_TIMEOUT_SECONDS = 60
 const MAX_FEEDBACK = 4000
 
 export type Hook = { matcher?: string; command: string; timeout?: number }
-export type Event = "PreToolUse" | "PostToolUse"
+export type Event = "PreToolUse" | "PostToolUse" | "Stop"
 export type Hooks = Partial<Record<Event, Hook[]>>
 
 export function parse(text: string): Hooks {
@@ -33,7 +34,7 @@ export function parse(text: string): Hooks {
             typeof item === "object" && item !== null && typeof (item as Hook).command === "string",
         )
       : []
-  return { PreToolUse: list("PreToolUse"), PostToolUse: list("PostToolUse") }
+  return { PreToolUse: list("PreToolUse"), PostToolUse: list("PostToolUse"), Stop: list("Stop") }
 }
 
 export function matches(matcher: string | undefined, tool: string) {
@@ -98,7 +99,9 @@ export const Plugin = define({
 
     const fire = (event: Event, tool: string, payload: Record<string, unknown>) =>
       Effect.promise(async () => {
-        const hooks = (await load()).flatMap((item) => item[event] ?? []).filter((hook) => matches(hook.matcher, tool))
+        const hooks = (await load())
+          .flatMap((item) => item[event] ?? [])
+          .filter((hook) => event === "Stop" || matches(hook.matcher, tool))
         const file = filePath(payload.input)
         const results = []
         for (const hook of hooks) {
@@ -132,6 +135,14 @@ export const Plugin = define({
         (result) => Effect.logWarning("hook failed", { command: result.hook.command, code: result.code, stderr: result.stderr }),
         { discard: true },
       )
+
+    yield* ctx.event.subscribe().pipe(
+      Stream.filter((event) => event.type === "session.execution.succeeded"),
+      Stream.runForEach((event) =>
+        fire("Stop", "", { sessionID: (event.data as { sessionID: string }).sessionID }).pipe(Effect.flatMap(warn)),
+      ),
+      Effect.forkScoped({ startImmediately: true }),
+    )
 
     yield* ctx.tool.hook("execute.before", (event) =>
       Effect.gen(function* () {

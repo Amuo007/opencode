@@ -45,6 +45,14 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - `matcher` is a pattern for tool names (`edit|write`, `chrome_.*`, `*`).
 - The command gets the call as JSON on stdin and `OPENCODE_TOOL`, `OPENCODE_FILE_PATH`, `OPENCODE_PROJECT_DIR`, `OPENCODE_HOOK_EVENT` in its environment.
 - Exit code **2** blocks a `PreToolUse` call (stderr is the reason the model sees) or, for `PostToolUse`, sends stderr back to the model as feedback. Other exit codes are logged and ignored.
+- `Stop` hooks run whenever a turn finishes, for example `{ "Stop": [{ "command": "say done" }] }` or a desktop notification.
+
+## Commands
+
+- `/goal <condition>` and `/goal stop` (see above)
+- `/security-review [commit|branch|pr]`: a focused security review of your changes with severities and exploit scenarios
+- `/memory [request]`: show, add, forget or review the agent's saved memories
+- Existing: `/init`, `/review`, and your custom commands
 
 ## App and settings
 

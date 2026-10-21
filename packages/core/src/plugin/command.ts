@@ -7,6 +7,8 @@ import { Location } from "../location.js"
 import { Mcp } from "../mcp/index.js"
 import PROMPT_INITIALIZE from "./command/initialize.txt"
 import PROMPT_REVIEW from "./command/review.txt"
+import PROMPT_SECURITY_REVIEW from "./command/security-review.txt"
+import PROMPT_MEMORY from "./command/memory.txt"
 
 export const Plugin = define({
   id: "opencode.command",
@@ -48,6 +50,32 @@ export const Plugin = define({
               ...input.prompt,
               sessionID: input.sessionID,
               text: append(PROMPT_REVIEW.replace("${path}", location.project.directory), input.prompt.text),
+              delivery: input.delivery,
+            })
+            .pipe(Effect.asVoid),
+      })
+      editor.add({
+        name: "security-review",
+        description: "security review of changes [commit|branch|pr], defaults to uncommitted",
+        execute: (input) =>
+          ctx.session
+            .prompt({
+              ...input.prompt,
+              sessionID: input.sessionID,
+              text: append(PROMPT_SECURITY_REVIEW, input.prompt.text),
+              delivery: input.delivery,
+            })
+            .pipe(Effect.asVoid),
+      })
+      editor.add({
+        name: "memory",
+        description: "show, add, forget or review persistent memories [request]",
+        execute: (input) =>
+          ctx.session
+            .prompt({
+              ...input.prompt,
+              sessionID: input.sessionID,
+              text: append(PROMPT_MEMORY, input.prompt.text),
               delivery: input.delivery,
             })
             .pipe(Effect.asVoid),

@@ -7,7 +7,7 @@ describe("ShellHooksPlugin", () => {
       ShellHooksPlugin.parse(
         JSON.stringify({ PreToolUse: [{ matcher: "shell", command: "true" }, { matcher: "x" }], Other: [] }),
       ),
-    ).toEqual({ PreToolUse: [{ matcher: "shell", command: "true" }], PostToolUse: [] })
+    ).toEqual({ PreToolUse: [{ matcher: "shell", command: "true" }], PostToolUse: [], Stop: [] })
   })
 
   test("matches tool names as anchored patterns", () => {

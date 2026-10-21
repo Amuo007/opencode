@@ -1,0 +1,10 @@
+Help the user manage your persistent memory for this project.
+
+Request: $ARGUMENTS
+
+- With no request: call memory_read with no name to show the index, then read the memories that look important and summarize every saved memory in a short list (name, type, one line each). Point out any that look outdated, duplicated or wrong, and ask whether to update or delete them.
+- To remember something: save it with memory_save (one fact per memory, update an existing memory instead of duplicating it).
+- To forget something: find it in the index and delete it with memory_delete.
+- To review: check each memory against the current code (files, functions, flags it mentions) and fix or delete the ones that are no longer true.
+
+Never store secrets, passwords or API keys in memory.
