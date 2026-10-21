@@ -5,6 +5,7 @@ import { Button } from "@opencode/ui/button"
 import { IconButton } from "@opencode/ui/icon-button"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { DockPrompt } from "@opencode/session-ui/dock-prompt"
+import { Markdown } from "@opencode/session-ui/markdown"
 import { Icon } from "@opencode/ui/icon"
 import { TextInput } from "@opencode/ui/text-input"
 import { useSpring } from "@opencode/ui/motion-spring"
@@ -16,6 +17,9 @@ import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useServerSDK } from "@/runtime/server/client"
 import { ScopedKey } from "@/runtime/server/scope"
 import { useCommand } from "@/shell/commands/command"
+
+// Questions with headings, lists or emphasis (such as a plan presented for approval) render as Markdown.
+const hasMarkdown = (text: string | undefined) => !!text && /(^#{1,6} |^\s*(?:[-*]|\d+\.) |\*\*|`)/m.test(text)
 
 const cache = new Map<string, { tab: number; answers: string[][]; custom: string[]; customOn: boolean[] }>()
 
@@ -593,7 +597,12 @@ export const SessionQuestionDock: Component<{ request: FormInfo; onSubmit: () =>
                   overflow: store.minimized ? "hidden" : undefined,
                 }}
               >
-                <bdi>{question()?.question}</bdi>
+                <Show
+                  when={!store.minimized && hasMarkdown(question()?.question)}
+                  fallback={<bdi>{question()?.question}</bdi>}
+                >
+                  <Markdown text={question()?.question ?? ""} class="text-14-regular" />
+                </Show>
               </div>
               <Show when={!store.minimized}>
                 <div data-slot="question-hint">
