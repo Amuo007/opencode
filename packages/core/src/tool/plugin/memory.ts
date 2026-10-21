@@ -60,6 +60,20 @@ export async function remove(directory: string, name: string) {
   if (current !== undefined) await writeFile(index, removeFromIndex(current, name))
 }
 
+/** Writes one memory and its index line; returns the stored name, or undefined when the name has no letters. */
+export async function save(
+  directory: string,
+  input: { name: string; description: string; type: string; content: string },
+) {
+  const name = slug(input.name)
+  if (!name) return undefined
+  const index = path.join(directory, INDEX)
+  await mkdir(directory, { recursive: true })
+  await writeFile(path.join(directory, `${name}.md`), format({ ...input, name }))
+  await writeFile(index, upsertIndex(await readFile(index, "utf8").catch(() => ""), name, input.description))
+  return name
+}
+
 export const format = (input: { name: string; description: string; type: string; content: string }) =>
   `---\nname: ${input.name}\ndescription: ${input.description.replace(/\n/g, " ")}\nmetadata:\n  type: ${input.type}\n---\n\n${input.content.trim()}\n`
 
@@ -160,11 +174,7 @@ export const Plugin = {
               const name = slug(input.name)
               if (!name) return yield* new ToolFailure({ message: "Memory name must contain letters or numbers" })
               yield* allow(context, name, { name, type: input.type })
-              yield* io("Could not save the memory", async () => {
-                await mkdir(directory, { recursive: true })
-                await writeFile(path.join(directory, `${name}.md`), format({ ...input, name }))
-                await writeFile(indexFile, upsertIndex(await readIndex(), name, input.description))
-              })
+              yield* io("Could not save the memory", () => save(directory, { ...input, name }))
               const output = `Saved memory "${name}" (${input.type}).`
               return { output: { output }, content: output }
             }),

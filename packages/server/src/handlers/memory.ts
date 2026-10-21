@@ -1,4 +1,5 @@
 import { Location } from "@opencode/core/location"
+import { InvalidRequestError } from "@opencode/protocol/errors"
 import { MemoryTools } from "@opencode/core/tool/plugin/memory"
 import { Global } from "@opencode/util/global"
 import { Effect } from "effect"
@@ -20,6 +21,17 @@ export const MemoryHandler = HttpApiBuilder.group(Api, "server.memory", (handler
           return { directory: dir, entries: yield* Effect.promise(() => MemoryTools.list(dir)) }
         }),
       ),
+    )
+    .handle(
+      "memory.save",
+      Effect.fn(function* (ctx) {
+        const dir = yield* directory
+        const name = yield* Effect.promise(() => MemoryTools.save(dir, ctx.payload))
+        if (!name) return yield* new InvalidRequestError({ message: "A memory name needs letters or numbers" })
+        return yield* response(
+          Effect.promise(() => MemoryTools.list(dir)).pipe(Effect.map((entries) => ({ directory: dir, entries }))),
+        )
+      }),
     )
     .handle(
       "memory.remove",

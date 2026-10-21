@@ -198,6 +198,8 @@ import type {
   SkillListOutput,
   MemoryListInput,
   MemoryListOutput,
+  MemorySaveInput,
+  MemorySaveOutput,
   MemoryRemoveInput,
   MemoryRemoveOutput,
   BrowserViewGetInput,
@@ -1284,6 +1286,19 @@ const EndpointMemoryList = (raw: RawClient["server.memory"]) => (input?: MemoryL
     raw["memory.list"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
   )
 
+const EndpointMemorySave = (raw: RawClient["server.memory"]) => (input: MemorySaveInput) =>
+  preserveEffect<MemorySaveOutput>()(
+    raw["memory.save"]({
+      query: { location: input["location"] },
+      payload: {
+        name: input["name"],
+        description: input["description"],
+        type: input["type"],
+        content: input["content"],
+      },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const EndpointMemoryRemove = (raw: RawClient["server.memory"]) => (input: MemoryRemoveInput) =>
   preserveEffect<MemoryRemoveOutput>()(
     raw["memory.remove"]({ params: { name: input["name"] }, query: { location: input["location"] } }).pipe(
@@ -1293,6 +1308,7 @@ const EndpointMemoryRemove = (raw: RawClient["server.memory"]) => (input: Memory
 
 const adaptGroupMemory = (raw: RawClient["server.memory"]) => ({
   list: EndpointMemoryList(raw),
+  save: EndpointMemorySave(raw),
   remove: EndpointMemoryRemove(raw),
 })
 

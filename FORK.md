@@ -91,7 +91,7 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Settings → Extensions → MCPs**: *Add server* (local command or remote URL, env vars, headers) and a remove button per server. Saved to your global config and connected immediately.
 - **Settings → Extensions → Skills → New skill**: write a skill (name, when to use it, instructions) without touching files; it is saved to `~/.config/opencode/skills/<name>/SKILL.md` and picked up at once. Skills in that folder get a remove button.
 - **Settings → Extensions → Tools**: switch the agent's tool groups on or off (browser, web search, web fetch, memory, your terminals, screen capture, code intelligence, notifications).
-- **Settings → Extensions → Memory**: every project's saved memories with type, description and content, and a delete button.
+- **Settings → Extensions → Memory**: every project's saved memories with type, description and content, an **Add memory** button (pick the project and type) and a delete button.
 - **Settings → Providers → Custom OpenAI-compatible provider**: now saves (base URL, API key, headers, models), so local servers can be added from the UI.
 - **Settings → Server → Web search**: choose Automatic, a specific provider (Built-in, Brave, Exa, Tavily, ...) or Off. The **API key** button saves, replaces or removes a key for Brave, Tavily, Exa, Firecrawl, Parallel or TinyFish (paid APIs are not blocked like scraping). From a terminal: `opencode auth login brave`, or set `BRAVE_API_KEY`.
 - **Context panel** (`/context`): *Output Speed (last / average)* in tokens per second next to context usage, tokens and cost.

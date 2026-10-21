@@ -1,6 +1,11 @@
-import { For, Show, createResource, createSignal } from "solid-js"
+import { For, Show, createMemo, createResource, createSignal } from "solid-js"
+import { Button } from "@opencode/ui/button"
+import { useDialog } from "@opencode/ui/context/dialog"
+import { Dialog, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
+import { Select } from "@opencode/ui/select"
+import { TextField } from "@opencode/ui/text-field"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useServerSDK } from "@/runtime/server/client"
 import { SettingsList } from "@/settings/list"
@@ -11,11 +16,125 @@ type ProjectMemories = {
   entries: ReadonlyArray<{ name: string; description: string; type: string; content: string }>
 }
 
+const TYPES = ["user", "feedback", "project", "reference"] as const
+
+/** Saves one memory for a chosen project, the same way the agent's memory_save tool does. */
+function DialogAddMemory(props: { projects: readonly string[]; onSaved: () => void }) {
+  const dialog = useDialog()
+  const language = useLanguage()
+  const serverSdk = useServerSDK()
+  const [project, setProject] = createSignal(props.projects[0] ?? "")
+  const [type, setType] = createSignal<(typeof TYPES)[number]>("user")
+  const [name, setName] = createSignal("")
+  const [description, setDescription] = createSignal("")
+  const [content, setContent] = createSignal("")
+  const [saving, setSaving] = createSignal(false)
+  const ready = () => !!project() && !!name().trim() && !!description().trim() && !!content().trim()
+
+  const save = async (event: SubmitEvent) => {
+    event.preventDefault()
+    if (!ready() || saving()) return
+    setSaving(true)
+    try {
+      await serverSdk.api.memory.save({
+        location: { directory: project() },
+        name: name(),
+        description: description(),
+        type: type(),
+        content: content(),
+      })
+      dialog.close()
+      props.onSaved()
+      showToast({
+        variant: "success",
+        icon: "circle-check",
+        title: language.t("settings.extensions.memory.saved", { name: name().trim() }),
+      })
+    } catch (error) {
+      showToast({
+        title: language.t("common.requestFailed"),
+        description: error instanceof Error ? error.message : String(error),
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog fit>
+      <DialogHeader>
+        <DialogTitleGroup
+          title={language.t("settings.extensions.memory.add.title")}
+          description={language.t("settings.extensions.memory.add.description")}
+        />
+      </DialogHeader>
+      <form onSubmit={save} class="flex flex-col gap-4 px-5 pb-2 min-w-[min(440px,90vw)]">
+        <div class="flex items-center gap-2">
+          <Select
+            options={[...props.projects]}
+            current={project()}
+            label={(item) => item.split("/").filter(Boolean).at(-1) ?? item}
+            onSelect={(item) => item && setProject(item)}
+          />
+          <Select
+            options={[...TYPES]}
+            current={type()}
+            label={(item) =>
+              language.t(`settings.extensions.memory.type.${item}` as "settings.extensions.memory.type.user")
+            }
+            onSelect={(item) => item && setType(item)}
+          />
+        </div>
+        <TextField
+          autofocus
+          label={language.t("settings.extensions.skill.name")}
+          placeholder="prefers-bun"
+          value={name()}
+          onChange={setName}
+        />
+        <TextField
+          label={language.t("settings.extensions.memory.summary")}
+          placeholder={language.t("settings.extensions.memory.summary.placeholder")}
+          value={description()}
+          onChange={setDescription}
+        />
+        <TextField
+          multiline
+          label={language.t("settings.extensions.memory.content")}
+          placeholder={language.t("settings.extensions.memory.content.placeholder")}
+          value={content()}
+          onChange={setContent}
+          class="min-h-28"
+        />
+        <DialogFooter>
+          <Button type="button" variant="neutral" onClick={() => dialog.close()}>
+            {language.t("common.cancel")}
+          </Button>
+          <Button type="submit" variant="submit" disabled={saving() || !ready()}>
+            {language.t("settings.extensions.memory.add.save")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  )
+}
+
 /** Every project's saved agent memories, with each memory's content on demand and a delete button. */
 export function SettingsMemories() {
   const language = useLanguage()
   const serverSdk = useServerSDK()
+  const dialog = useDialog()
   const [open, setOpen] = createSignal<string>()
+  const [projects] = createResource(
+    () => serverSdk.connection.status() === "connected",
+    () =>
+      serverSdk.api.project
+        .list()
+        .then((items) => items.map((item) => item.canonical))
+        .catch(() => [] as string[]),
+    { initialValue: [] },
+  )
+  const projectList = createMemo(() => projects.latest ?? [])
 
   const [memories, { refetch }] = createResource(
     () => serverSdk.connection.status() === "connected",
@@ -55,12 +174,28 @@ export function SettingsMemories() {
     <div class="settings-section">
       <div class="flex items-center justify-between">
         <span class="settings-extension-heading text-13-medium">{language.t("settings.extensions.memory.title")}</span>
-        <span class="text-13-regular text-v2-text-text-muted">{language.t("settings.extensions.memory.hint")}</span>
+        <div class="flex items-center gap-3">
+          <span class="text-13-regular text-v2-text-text-muted">{language.t("settings.extensions.memory.hint")}</span>
+          <Button
+            type="button"
+            size="small"
+            variant="neutral"
+            icon="plus-small"
+            disabled={projectList().length === 0}
+            onClick={() =>
+              dialog.show(() => <DialogAddMemory projects={projectList()} onSaved={() => void refetch()} />)
+            }
+          >
+            {language.t("settings.extensions.memory.add.button")}
+          </Button>
+        </div>
       </div>
       <Show
         when={(memories.latest ?? []).length > 0}
         fallback={
-          <div class="text-13-regular text-v2-text-text-muted py-4">{language.t("settings.extensions.memory.empty")}</div>
+          <div class="text-13-regular text-v2-text-text-muted py-4">
+            {language.t("settings.extensions.memory.empty")}
+          </div>
         }
       >
         <For each={memories.latest ?? []}>

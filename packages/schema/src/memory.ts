@@ -15,3 +15,11 @@ export const Info = Schema.Struct({
   directory: Schema.String,
   entries: Schema.Array(Entry),
 }).annotate({ identifier: "Memory.Info" })
+
+export interface SaveInput extends Schema.Schema.Type<typeof SaveInput> {}
+export const SaveInput = Schema.Struct({
+  name: Schema.String,
+  description: Schema.String,
+  type: Schema.Literals(["user", "feedback", "project", "reference"]),
+  content: Schema.String,
+}).annotate({ identifier: "Memory.SaveInput" })

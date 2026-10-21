@@ -5595,6 +5595,36 @@ export type MemoryListInput = {
 
 export type MemoryListOutput = { location: LocationPublicRef; data: MemoryInfo }
 
+export type MemorySaveInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: {
+    readonly name: string
+    readonly description: string
+    readonly type: "user" | "feedback" | "project" | "reference"
+    readonly content: string
+  }["name"]
+  readonly description: {
+    readonly name: string
+    readonly description: string
+    readonly type: "user" | "feedback" | "project" | "reference"
+    readonly content: string
+  }["description"]
+  readonly type: {
+    readonly name: string
+    readonly description: string
+    readonly type: "user" | "feedback" | "project" | "reference"
+    readonly content: string
+  }["type"]
+  readonly content: {
+    readonly name: string
+    readonly description: string
+    readonly type: "user" | "feedback" | "project" | "reference"
+    readonly content: string
+  }["content"]
+}
+
+export type MemorySaveOutput = { location: LocationPublicRef; data: MemoryInfo }
+
 export type MemoryRemoveInput = {
   readonly name: { readonly name: string }["name"]
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]

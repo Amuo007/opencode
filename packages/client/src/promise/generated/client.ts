@@ -196,6 +196,8 @@ import type {
   SkillListOutput,
   MemoryListInput,
   MemoryListOutput,
+  MemorySaveInput,
+  MemorySaveOutput,
   MemoryRemoveInput,
   MemoryRemoveOutput,
   BrowserViewGetInput,
@@ -1751,6 +1753,24 @@ export function make(options: ClientOptions) {
             method: "GET",
             path: `/api/experimental/memory`,
             query: { location: input?.["location"] },
+            successStatus: 200,
+            declaredStatuses: [400, 401, 404],
+            empty: false,
+          },
+          requestOptions,
+        ),
+      save: (input: MemorySaveInput, requestOptions?: RequestOptions) =>
+        request<MemorySaveOutput>(
+          {
+            method: "POST",
+            path: `/api/experimental/memory`,
+            query: { location: input["location"] },
+            body: {
+              name: input["name"],
+              description: input["description"],
+              type: input["type"],
+              content: input["content"],
+            },
             successStatus: 200,
             declaredStatuses: [400, 401, 404],
             empty: false,

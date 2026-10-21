@@ -1854,6 +1854,27 @@ export type MemoryListOutput = {
 }
 export type MemoryListOperation<E = never> = (input?: MemoryListInput) => Effect.Effect<MemoryListOutput, E>
 
+export type MemorySaveInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly description: string
+  readonly type: "user" | "feedback" | "project" | "reference"
+  readonly content: string
+}
+export type MemorySaveOutput = {
+  readonly location: Location.PublicRef
+  readonly data: {
+    readonly directory: string
+    readonly entries: ReadonlyArray<{
+      readonly name: string
+      readonly description: string
+      readonly type: string
+      readonly content: string
+    }>
+  }
+}
+export type MemorySaveOperation<E = never> = (input: MemorySaveInput) => Effect.Effect<MemorySaveOutput, E>
+
 export type MemoryRemoveInput = {
   readonly name: string
   readonly location?: { readonly directory?: string | undefined } | undefined
@@ -1863,6 +1884,7 @@ export type MemoryRemoveOperation<E = never> = (input: MemoryRemoveInput) => Eff
 
 export interface MemoryApi<E = never> {
   readonly list: MemoryListOperation<E>
+  readonly save: MemorySaveOperation<E>
   readonly remove: MemoryRemoveOperation<E>
 }
 
