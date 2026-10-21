@@ -11,7 +11,7 @@ Build a standalone binary for this machine (local channel: no auto-updates, its 
 ```bash
 cd packages/cli && OPENCODE_CHANNEL=local bun run script/build.ts --single --skip-install
 ./dist/cli-darwin-arm64/bin/opencode            # terminal UI
-./dist/cli-darwin-arm64/bin/opencode pair       # web UI: prints a one-time sign-in link, open it in your browser
+./dist/cli-darwin-arm64/bin/opencode pair -o    # web UI: opens a one-time sign-in link in your browser
 ./dist/cli-darwin-arm64/bin/opencode serve      # or a foreground web server at the printed address
 ```
 

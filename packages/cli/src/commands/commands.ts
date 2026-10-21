@@ -538,6 +538,11 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
           ),
           Flag.withDefault(false),
         ),
+        open: Flag.Boolean("open").pipe(
+          Flag.withAlias("o"),
+          Flag.withDescription("Open the first link in your default browser"),
+          Flag.withDefault(false),
+        ),
         yes: Flag.Boolean("yes").pipe(
           Flag.withAlias("y"),
           Flag.withDescription(

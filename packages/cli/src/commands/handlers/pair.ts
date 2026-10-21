@@ -1,4 +1,5 @@
 import { cancel, confirm, isCancel, log } from "@clack/prompts"
+import { spawn } from "node:child_process"
 import { EOL } from "os"
 import { Effect, Option, Schedule } from "effect"
 import { Service } from "@opencode/client/effect/service"
@@ -53,6 +54,8 @@ export default Runtime.handler(
       ].join(EOL) + EOL,
     )
 
+    if (input.open && links[0]) openInBrowser(links[0])
+
     if (input.remote || Option.isSome(input.url)) return
     const url = new URL(endpoint.url)
     if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) return
@@ -68,6 +71,20 @@ export default Runtime.handler(
     )
   }),
 )
+
+/** The command that opens a URL in the default browser on a platform. */
+export function browserCommand(url: string, platform = process.platform): [string, string[]] {
+  if (platform === "darwin") return ["open", [url]]
+  if (platform === "win32") return ["cmd", ["/c", "start", "", url]]
+  return ["xdg-open", [url]]
+}
+
+function openInBrowser(url: string) {
+  const [command, args] = browserCommand(url)
+  const child = spawn(command, args, { detached: true, stdio: "ignore" })
+  child.on("error", () => process.stderr.write(`  Could not open a browser; open the link above yourself.${EOL}`))
+  child.unref()
+}
 
 export const remoteWarning = [
   "This will expose your OpenCode server to the internet.",
