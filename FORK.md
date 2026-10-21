@@ -97,6 +97,16 @@ Shell-command hooks in `~/.config/opencode/hooks.json` (global) and `<project>/.
 - **Context panel** (`/context`): *Output Speed (last / average)* in tokens per second next to context usage, tokens and cost.
 - Browser, memory, notebook, plan, screenshot, terminal, background-stop, goal and notification tools have readable titles in the web UI and terminal.
 
+## Known limitations
+
+- The packaged desktop app (`packages/desktop`) does not work with this fork yet: the server it starts never
+  answers project requests, although the same binary works from the terminal, `pair`, `serve` and the background
+  service. Use the web UI (installable as an app window from Chrome) or the terminal UI.
+- `screenshot` needs macOS Screen Recording permission for the app running OpenCode; without it the image shows
+  only the wallpaper.
+- The agent browser is headless Chrome: sites that block automation or need your logins are better handled in
+  your own browser.
+
 ## Notes
 
 - Fewer tools means a shorter prompt on every request, which helps small local models. Switch tool groups off in
