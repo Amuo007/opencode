@@ -1,3 +1,7 @@
+> **This fork (`claude-parity` branch)** adds Claude Code style tools and app features: a live agent browser,
+> screenshots, terminal access, persistent memory, LSP, keyless web search, MCP/skill/tool management in Settings,
+> usage stats and more. See [FORK.md](FORK.md) for what's new and how to run it.
+
 <p align="center">
   <a href="https://opencode.ai">
     <picture>
